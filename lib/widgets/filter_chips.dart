@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../core/app_theme.dart';
 
+/// Generic filter chip row used for risk, test-type, status filters.
 class FilterChips<T> extends StatelessWidget {
   final List<T> options;
   final T selected;
@@ -16,33 +18,41 @@ class FilterChips<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primaryColor = const Color(0xFF1E3A5F);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
       children: options.map((option) {
         final isSelected = option == selected;
         return ChoiceChip(
           label: Text(labelBuilder(option)),
           selected: isSelected,
           onSelected: (_) => onSelected(option),
-          selectedColor: isDark ? const Color(0xFF3B82F6) : primaryColor,
-          backgroundColor: isDark ? const Color(0xFF334155) : Colors.grey[200],
+          selectedColor: isDark ? AppColors.accent : AppColors.primary,
+          backgroundColor:
+              isDark ? AppColors.surfaceDark : AppColors.backgroundLight,
           labelStyle: TextStyle(
             color: isSelected
-                ? Colors.white
-                : (isDark ? Colors.grey[300] : Colors.grey[700]),
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ? AppColors.textOnPrimary
+                : (isDark
+                    ? AppColors.textDarkSecondary
+                    : AppColors.textSecondary),
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            fontSize: 13,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            side: isSelected
+                ? BorderSide.none
+                : BorderSide(
+                    color: isDark ? AppColors.dividerDark : AppColors.divider,
+                  ),
           ),
           side: BorderSide.none,
           showCheckmark: false,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding:
+              const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
         );
       }).toList(),
     );

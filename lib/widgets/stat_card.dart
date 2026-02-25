@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import '../core/app_theme.dart';
 
+/// A KPI stat card showing an icon, a large value and a title label.
+///
+/// Matches the design: rounded-12 card, tinted icon container,
+/// bold headline value, secondary caption title.
 class StatCard extends StatelessWidget {
   final String title;
   final String value;
   final IconData icon;
   final Color iconColor;
+  final String? subtitle;
 
   const StatCard({
     super.key,
@@ -12,6 +18,7 @@ class StatCard extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.iconColor,
+    this.subtitle,
   });
 
   @override
@@ -20,44 +27,71 @@ class StatCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Card(
-      elevation: 2,
-      shadowColor: Colors.black26,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      elevation: isDark ? 0 : 2,
+      shadowColor: AppColors.cardShadow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        side: isDark
+            ? BorderSide(color: AppColors.dividerDark.withValues(alpha: 0.5))
+            : BorderSide.none,
+      ),
+      color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 22),
-                ),
-                const Spacer(),
-              ],
+            // Icon container
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.sm),
+
+            // Value
             Text(
               value,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF1E3A5F),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: isDark ? AppColors.textDarkPrimary : AppColors.primary,
+                height: 1.2,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
+
+            // Title
             Text(
               title,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                color: isDark
+                    ? AppColors.textDarkSecondary
+                    : AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
+
+            // Optional subtitle
+            if (subtitle != null) ...
+              [Text(
+                subtitle!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: isDark
+                      ? AppColors.textDarkSecondary.withValues(alpha: 0.7)
+                      : AppColors.textSecondary.withValues(alpha: 0.7),
+                  fontSize: 11,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              )],
           ],
         ),
       ),

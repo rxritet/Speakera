@@ -1,37 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../core/app_theme.dart';
 import '../data/mock_data.dart';
 
+/// Weekly KPI line chart powered by fl_chart.
 class KpiChart extends StatelessWidget {
   final List<double> data;
+  final String title;
 
-  const KpiChart({super.key, required this.data});
+  const KpiChart({
+    super.key,
+    required this.data,
+    this.title = 'Weekly KPI Scores',
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final primaryColor = const Color(0xFF1E3A5F);
-    final accentColor = const Color(0xFF3B82F6);
+
+    final gridColor = isDark
+        ? AppColors.dividerDark.withValues(alpha: 0.4)
+        : AppColors.divider.withValues(alpha: 0.6);
+    final labelColor =
+        isDark ? AppColors.textDarkSecondary : AppColors.textSecondary;
 
     return Card(
-      elevation: 2,
-      shadowColor: Colors.black26,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      elevation: isDark ? 0 : 2,
+      shadowColor: AppColors.cardShadow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        side: isDark
+            ? BorderSide(color: AppColors.dividerDark.withValues(alpha: 0.5))
+            : BorderSide.none,
+      ),
+      color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Weekly KPI Scores',
+              title,
               style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : primaryColor,
+                fontWeight: FontWeight.w700,
+                color:
+                    isDark ? AppColors.textDarkPrimary : AppColors.primary,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xl),
             SizedBox(
               height: 220,
               child: LineChart(
@@ -41,12 +58,7 @@ class KpiChart extends StatelessWidget {
                     drawVerticalLine: false,
                     horizontalInterval: 20,
                     getDrawingHorizontalLine: (value) {
-                      return FlLine(
-                        color: isDark
-                            ? Colors.white12
-                            : Colors.grey.withValues(alpha: 0.2),
-                        strokeWidth: 1,
-                      );
+                      return FlLine(color: gridColor, strokeWidth: 1);
                     },
                   ),
                   titlesData: FlTitlesData(
@@ -59,9 +71,7 @@ class KpiChart extends StatelessWidget {
                           return Text(
                             value.toInt().toString(),
                             style: TextStyle(
-                              color: isDark
-                                  ? Colors.grey[400]
-                                  : Colors.grey[600],
+                              color: labelColor,
                               fontSize: 11,
                             ),
                           );
@@ -83,9 +93,7 @@ class KpiChart extends StatelessWidget {
                             child: Text(
                               weekDays[index],
                               style: TextStyle(
-                                color: isDark
-                                    ? Colors.grey[400]
-                                    : Colors.grey[600],
+                                color: labelColor,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -114,7 +122,7 @@ class KpiChart extends StatelessWidget {
                       ),
                       isCurved: true,
                       curveSmoothness: 0.3,
-                      color: accentColor,
+                      color: AppColors.accent,
                       barWidth: 3,
                       isStrokeCapRound: true,
                       dotData: FlDotData(
@@ -122,9 +130,11 @@ class KpiChart extends StatelessWidget {
                         getDotPainter: (spot, percent, bar, index) {
                           return FlDotCirclePainter(
                             radius: 4,
-                            color: Colors.white,
+                            color: isDark
+                                ? AppColors.surfaceDark
+                                : Colors.white,
                             strokeWidth: 2.5,
-                            strokeColor: accentColor,
+                            strokeColor: AppColors.accent,
                           );
                         },
                       ),
@@ -134,8 +144,8 @@ class KpiChart extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            accentColor.withValues(alpha: 0.3),
-                            accentColor.withValues(alpha: 0.0),
+                            AppColors.accent.withValues(alpha: 0.25),
+                            AppColors.accent.withValues(alpha: 0.0),
                           ],
                         ),
                       ),

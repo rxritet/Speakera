@@ -7,30 +7,34 @@ import '../widgets/custom_text_field.dart';
 import '../widgets/primary_button.dart';
 
 /// ═══════════════════════════════════════════════════════════════════════════
-/// LOGIN SCREEN — Speakera
+/// REGISTER SCREEN — Speakera
 ///
-/// • Gradient background (light lavender tones)
-/// • Centred card with logo, role toggle, email/password fields, sign-in button
+/// • Same gradient background & card style as LoginScreen
+/// • Fields: Name, Email, Password, Confirm Password
+/// • Role toggle (Admin / Student)
 /// • Staggered fade-in + slide-up animation
-/// • Auth via email: admin emails → admin dashboard, student → student dashboard
+/// • "Already have an account? Sign In" link
 /// ═══════════════════════════════════════════════════════════════════════════
-class LoginScreen extends StatefulWidget {
-  final VoidCallback? onSwitchToRegister;
+class RegisterScreen extends StatefulWidget {
+  final VoidCallback? onSwitchToLogin;
 
-  const LoginScreen({super.key, this.onSwitchToRegister});
+  const RegisterScreen({super.key, this.onSwitchToLogin});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _RegisterScreenState extends State<RegisterScreen>
     with TickerProviderStateMixin {
   // ── Form state ─────────────────────────────────────────────────────────
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  UserRole _selectedRole = UserRole.admin;
+  final _confirmPasswordController = TextEditingController();
+  UserRole _selectedRole = UserRole.student;
   bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -48,7 +52,6 @@ class _LoginScreenState extends State<LoginScreen>
   void initState() {
     super.initState();
 
-    // Fade controller — staggered intervals for each element
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -75,7 +78,6 @@ class _LoginScreenState extends State<LoginScreen>
       curve: const Interval(0.60, 1.0, curve: Curves.easeOut),
     );
 
-    // Slide controller — the whole card slides up gently
     _slideController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -94,39 +96,46 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _fadeController.dispose();
     _slideController.dispose();
     super.dispose();
   }
 
-  // ── Login handler ──────────────────────────────────────────────────────
-  Future<void> _handleLogin() async {
-    // Clear previous error
+  // ── Register handler ───────────────────────────────────────────────────
+  Future<void> _handleRegister() async {
     setState(() => _errorMessage = null);
 
-    // Validate form
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() => _isLoading = true);
 
+    final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final authProvider = context.read<AuthProvider>();
 
-    final success = await authProvider.loginWithEmail(email, password);
+    final error = await authProvider.register(
+      name: name,
+      email: email,
+      password: password,
+      role: _selectedRole,
+    );
 
     if (!mounted) return;
 
-    if (success) {
+    if (error == null) {
+      // Registration successful — auto-login handled by AuthProvider
       // Navigation is handled by SpeakeraHome Consumer
       return;
     }
 
     setState(() {
       _isLoading = false;
-      _errorMessage = 'No account found with this email. Please try again.';
+      _errorMessage = error;
     });
   }
 
@@ -172,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // ── Login card ─────────────────────────────────────────────────────────
+  // ── Registration card ──────────────────────────────────────────────────
   Widget _buildCard(bool isDark, ThemeData theme) {
     return Card(
       elevation: 8,
@@ -219,10 +228,10 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               const SizedBox(height: AppSpacing.xxl),
 
-              // ── Button ─────────────────────────────────────────────
+              // ── Button + link ──────────────────────────────────────
               FadeTransition(
                 opacity: _buttonFade,
-                child: _buildSignInButton(),
+                child: _buildActions(isDark),
               ),
             ],
           ),
@@ -264,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen>
     return Column(
       children: [
         Text(
-          'Speakera',
+          'Create Account',
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w700,
             color: isDark ? AppColors.textDarkPrimary : AppColors.primary,
@@ -273,7 +282,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'English Language Assessment Platform',
+          'Sign up to start using Speakera',
           style: theme.textTheme.bodySmall?.copyWith(
             color: isDark
                 ? AppColors.textDarkSecondary
@@ -310,7 +319,9 @@ class _LoginScreenState extends State<LoginScreen>
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: (isDark ? AppColors.accent : AppColors.primary)
+                            color: (isDark
+                                    ? AppColors.accent
+                                    : AppColors.primary)
                                 .withValues(alpha: 0.25),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
@@ -339,17 +350,35 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // ── Email & Password fields ────────────────────────────────────────────
+  // ── Form fields ────────────────────────────────────────────────────────
   Widget _buildFields(bool isDark) {
     return Column(
       children: [
+        // Full Name
+        CustomTextField(
+          controller: _nameController,
+          labelText: 'Full Name',
+          hintText: 'Enter your full name',
+          prefixIcon: Icons.person_outline,
+          keyboardType: TextInputType.name,
+          textInputAction: TextInputAction.next,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter your name';
+            }
+            if (value.trim().length < 2) {
+              return 'Name must be at least 2 characters';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: AppSpacing.lg),
+
         // Email
         CustomTextField(
           controller: _emailController,
           labelText: 'Email',
-          hintText: _selectedRole == UserRole.admin
-              ? 'admin@speakera.com'
-              : 'student@example.com',
+          hintText: 'your.email@example.com',
           prefixIcon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
@@ -357,8 +386,9 @@ class _LoginScreenState extends State<LoginScreen>
             if (value == null || value.trim().isEmpty) {
               return 'Please enter your email';
             }
-            if (!value.contains('@')) {
-              return 'Please enter a valid email';
+            if (!RegExp(r'^[\w\-.]+@([\w\-]+\.)+[\w\-]{2,4}$')
+                .hasMatch(value.trim())) {
+              return 'Please enter a valid email address';
             }
             return null;
           },
@@ -369,10 +399,10 @@ class _LoginScreenState extends State<LoginScreen>
         CustomTextField(
           controller: _passwordController,
           labelText: 'Password',
-          hintText: 'Enter your password',
+          hintText: 'At least 6 characters',
           prefixIcon: Icons.lock_outline,
           obscureText: !_isPasswordVisible,
-          textInputAction: TextInputAction.done,
+          textInputAction: TextInputAction.next,
           suffixIcon: IconButton(
             icon: Icon(
               _isPasswordVisible
@@ -388,7 +418,43 @@ class _LoginScreenState extends State<LoginScreen>
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'Please enter your password';
+              return 'Please enter a password';
+            }
+            if (value.length < 6) {
+              return 'Password must be at least 6 characters';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // Confirm Password
+        CustomTextField(
+          controller: _confirmPasswordController,
+          labelText: 'Confirm Password',
+          hintText: 'Re-enter your password',
+          prefixIcon: Icons.lock_outline,
+          obscureText: !_isConfirmPasswordVisible,
+          textInputAction: TextInputAction.done,
+          suffixIcon: IconButton(
+            icon: Icon(
+              _isConfirmPasswordVisible
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
+              size: 20,
+              color: isDark
+                  ? AppColors.textDarkSecondary
+                  : AppColors.textSecondary,
+            ),
+            onPressed: () => setState(
+                () => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please confirm your password';
+            }
+            if (value != _passwordController.text) {
+              return 'Passwords do not match';
             }
             return null;
           },
@@ -412,7 +478,8 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             child: Row(
               children: [
-                const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                const Icon(Icons.error_outline,
+                    color: AppColors.error, size: 18),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
@@ -432,22 +499,21 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // ── Sign-in button ─────────────────────────────────────────────────────
-  Widget _buildSignInButton() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  // ── Sign-up button + login link ────────────────────────────────────────
+  Widget _buildActions(bool isDark) {
     return Column(
       children: [
         PrimaryButton(
-          text: 'Sign In',
+          text: 'Create Account',
           isLoading: _isLoading,
-          onPressed: _handleLogin,
+          onPressed: _handleRegister,
         ),
         const SizedBox(height: AppSpacing.lg),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "Don't have an account? ",
+              'Already have an account? ',
               style: TextStyle(
                 color: isDark
                     ? AppColors.textDarkSecondary
@@ -456,9 +522,9 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
             GestureDetector(
-              onTap: widget.onSwitchToRegister,
+              onTap: widget.onSwitchToLogin,
               child: Text(
-                'Sign Up',
+                'Sign In',
                 style: TextStyle(
                   color: isDark ? AppColors.accent : AppColors.primary,
                   fontSize: 13,
@@ -472,4 +538,3 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 }
-
