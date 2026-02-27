@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/notifications/notification_service.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/auth/register_screen.dart';
@@ -9,9 +10,12 @@ import 'presentation/screens/duel/duel_detail_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/leaderboard/leaderboard_screen.dart';
 import 'presentation/screens/profile/profile_screen.dart';
+import 'presentation/screens/settings/settings_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.instance.init();
+  await NotificationService.instance.restoreReminder();
   runApp(const ProviderScope(child: HabitDuelApp()));
 }
 
@@ -73,6 +77,7 @@ class _HabitDuelAppState extends ConsumerState<HabitDuelApp> {
         '/create-duel': (_) => const CreateDuelScreen(),
         '/leaderboard': (_) => const LeaderboardScreen(),
         '/profile': (_) => const ProfileScreen(),
+        '/settings': (_) => const SettingsScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/duel') {

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/profile.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -28,8 +27,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         title: const Text('Profile'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authProvider.notifier).logout(),
+            icon: const Icon(Icons.settings),
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
           ),
         ],
       ),
