@@ -1,7 +1,7 @@
 # ⚔️ HabitDuel
 
 <div align="center">
-  <p><b>A competitive habit-tracking app built with Flutter and Dart Shelf.</b></p>
+  <p><b>Соревновательный трекер привычек на Flutter и Dart Shelf.</b></p>
 
   [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?style=flat-square&logo=flutter)](https://flutter.dev/)
   [![Dart Backend](https://img.shields.io/badge/Backend-Dart_Shelf-0175C2?style=flat-square&logo=dart)](https://dart.dev/)
@@ -11,121 +11,168 @@
 
 ---
 
-## 📖 About The Project
+## 📖 О проекте
 
-**HabitDuel** is not just another habit tracker. It relies on gamification and social contracts to help users build consistency. Two users enter a "duel" and must perform a daily check-in for a chosen habit. Skip a day, and your streak resets to zero. The user who outlasts their opponent wins the duel.
+**HabitDuel** — это не просто трекер привычек. Приложение использует геймификацию и социальные обязательства, чтобы помочь пользователям выработать последовательность. Два игрока вступают в «дуэль» и должны ежедневно делать check-in для выбранной привычки. Пропустил день — серия сбрасывается до нуля. Тот, кто продержится дольше, выигрывает дуэль.
 
-### ✨ Key Features
+### ✨ Ключевые возможности
 
-- **1v1 Duels** — Create open or targeted duels for 7, 14, 21, or 30 days.
-- **Real-time Updates** — WebSocket integration ensures you see your opponent's check-ins and broken streaks instantly.
-- **Strict UTC Tracking** — Daily check-ins are verified against server UTC time, preventing client-side time manipulation.
-- **Global Leaderboard & Badges** — Compete globally and earn automated badges (e.g., 3, 5, or 10 wins).
-- **Smart Notifications** — Local push notifications remind you to check in and alert you when to attack if your opponent breaks their streak.
+- **1v1 Дуэли** — создавай открытые или направленные дуэли на 7, 14, 21 или 30 дней
+- **Real-time обновления** — WebSocket мгновенно показывает check-in'ы и сломанные серии соперника
+- **UTC-верификация** — ежедневные check-in'ы проверяются по серверному UTC-времени, исключая манипуляции на клиенте
+- **Лидерборд и бейджи** — глобальный рейтинг и автоматические бейджи (например, за 3, 5 или 10 побед)
+- **Умные уведомления** — локальные push-уведомления напоминают о check-in'е и сигнализируют, когда соперник сломал свою серию
 
 ---
 
-## 🏗️ Tech Stack & Architecture
+## 🏗️ Стек и архитектура
 
-This is a **Fullstack Dart** project utilizing a shared language ecosystem for both client and server.
+Это **Fullstack Dart** проект — единый язык для клиента и сервера.
 
 ### Frontend (Flutter)
 
-| Layer | Technology |
-|---|---|
-| Framework | Flutter 3.x |
-| Architecture | Clean Architecture (Presentation, Domain, Data, Core) |
-| State Management | Riverpod 2.5+ |
-| Networking (REST) | Dio + Retrofit |
-| Networking (Realtime) | `web_socket_channel` |
-| Secure Storage | `flutter_secure_storage` (JWT tokens) |
+| Слой              | Технология                                       |
+|-------------------|--------------------------------------------------|
+| Фреймворк         | Flutter 3.x                                      |
+| Архитектура       | Clean Architecture (Presentation, Domain, Data, Core) |
+| Управление состоянием | Riverpod 2.5+                               |
+| Сеть (REST)       | Dio                                              |
+| Сеть (Realtime)   | `web_socket_channel`                             |
+| Хранилище         | `flutter_secure_storage` (JWT), `shared_preferences` |
+| Уведомления       | `flutter_local_notifications`, `timezone`        |
 
 ### Backend (Dart Shelf)
 
-| Layer | Technology |
-|---|---|
-| Framework | Dart `shelf` + `shelf_router` |
-| Database | PostgreSQL 16 |
-| Authentication | JWT (`dart_jsonwebtoken`, `crypto`) |
-| Migrations | Custom idempotent migration script (raw SQL) |
+| Слой              | Технология                                       |
+|-------------------|--------------------------------------------------|
+| Фреймворк         | Dart `shelf` + `shelf_router` + `shelf_web_socket` |
+| База данных       | PostgreSQL 16                                    |
+| Аутентификация    | JWT (`dart_jsonwebtoken`, `crypto`)              |
+| Миграции          | Кастомный идемпотентный скрипт (raw SQL)         |
+| Конфигурация      | `dotenv`                                         |
 
 ---
 
-## 📁 Project Structure
+## 📁 Структура проекта
 
 ```
-habitduel/
-├── lib/
-│   ├── core/           # Shared utilities, constants, theme
-│   ├── data/           # Repositories, data sources, models
-│   ├── domain/         # Entities, use cases, interfaces
-│   └── presentation/   # Screens, widgets, providers
-├── server/
+HabitDuel/
+├── lib/                        # Flutter-клиент
+│   ├── core/                   # Сервисы (уведомления, утилиты)
+│   ├── data/                   # Репозитории и API-слой
+│   ├── domain/                 # Модели и бизнес-логика
+│   ├── presentation/
+│   │   ├── providers/          # Riverpod-провайдеры
+│   │   └── screens/            # Экраны (auth, duel, home, leaderboard, profile, settings)
+│   └── main.dart               # Точка входа
+├── server/                     # Dart Shelf бэкенд
 │   ├── bin/
-│   │   ├── server.dart     # Entry point
-│   │   └── migrate.dart    # DB migration runner
-│   ├── lib/            # Routes, handlers, services
-│   └── pubspec.yaml
+│   │   ├── server.dart         # Точка входа сервера
+│   │   └── migrate.dart        # CLI-утилита миграций
+│   └── lib/
+│       ├── handlers/           # HTTP-обработчики (auth, duels, checkins, leaderboard)
+│       ├── middleware/         # JWT-middleware
+│       ├── models/             # Модели данных
+│       ├── services/           # Бизнес-логика
+│       ├── websocket/          # WebSocket-хаб
+│       ├── cron/               # Периодические задачи
+│       └── db/                 # Подключение к PostgreSQL
+│   └── migrations/             # SQL-миграции (001–007)
+├── android/
+├── ios/
 ├── pubspec.yaml
 └── README.md
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🗄 База данных
 
-### Prerequisites
+Миграции применяются в порядке номеров:
+
+| Миграция | Таблица / Действие          |
+|----------|-----------------------------|
+| 001      | users                       |
+| 002      | duels                       |
+| 003      | duel_participants            |
+| 004      | checkins                    |
+| 005      | badges                      |
+| 006      | indexes (оптимизация)       |
+| 007      | migrations (учёт применения)|
+
+---
+
+## 📱 Экраны приложения
+
+- **Login / Register** — вход и регистрация
+- **Home (Duels)** — список активных дуэлей
+- **Duel Detail** — детали дуэли, check-in, прогресс соперника в реальном времени
+- **Create Duel** — создание дуэли с выбором привычки и соперника
+- **Leaderboard** — глобальный рейтинг
+- **Profile** — статистика, бейджи, история
+- **Settings** — тема оформления, напоминания
+
+---
+
+## 🔌 API (основные эндпоинты)
+
+| Метод | Путь                  | Описание                          |
+|-------|-----------------------|-----------------------------------|
+| POST  | `/auth/register`      | Регистрация нового пользователя   |
+| POST  | `/auth/login`         | Вход, получение JWT               |
+| GET   | `/duels`              | Список дуэлей пользователя        |
+| POST  | `/duels`              | Создать дуэль                     |
+| POST  | `/duels/:id/accept`   | Принять вызов                     |
+| POST  | `/checkins`           | Отметить check-in                 |
+| GET   | `/leaderboard`        | Глобальный рейтинг                |
+| WS    | `/ws`                 | WebSocket real-time обновления    |
+
+---
+
+## 🚀 Быстрый старт
+
+### Требования
 
 - [Flutter SDK](https://flutter.dev/docs/get-started/install) 3.x
-- [Dart SDK](https://dart.dev/get-dart)
-- [PostgreSQL 16](https://www.postgresql.org/download/) (local or via Docker)
+- [Dart SDK](https://dart.dev/get-dart) ≥ 3.0
+- [PostgreSQL 16](https://www.postgresql.org/download/) (локально или через Docker)
 
-### 1. Clone the Repository
+### 1. Клонирование
 
 ```bash
 git clone https://github.com/rxritet/HabitDuel.git
 cd HabitDuel
 ```
 
-### 2. Database & Backend Setup
+### 2. Настройка бэкенда
 
 ```bash
-# Navigate to server directory
 cd server
-
-# Install dependencies
 dart pub get
-
-# Configure environment variables
 cp .env.example .env
-# Edit .env and fill in your DB credentials
-
-# Run database migrations
-dart bin/migrate.dart
-
-# Start the server (defaults to port 8080)
-dart bin/server.dart
+# Отредактируй .env — укажи данные PostgreSQL и JWT_SECRET
+dart run bin/migrate.dart
+dart run bin/server.dart
 ```
 
-### 3. Frontend Setup
+Сервер запустится на `http://localhost:8080`.
 
-Open a new terminal in the project root:
+### 3. Запуск Flutter-клиента
+
+Открой новый терминал в корне проекта:
 
 ```bash
-# Install dependencies
 flutter pub get
-
-# Run the app
 flutter run
 ```
 
-> **Note:** Make sure the backend server is running before launching the Flutter app.
+> **Важно:** бэкенд должен быть запущен до старта Flutter-приложения.
 
 ---
 
-## ⚙️ Environment Variables
+## ⚙️ Переменные окружения
 
-Create a `.env` file inside the `server/` directory based on `.env.example`:
+Создай файл `.env` в папке `server/` на основе `.env.example`:
 
 ```env
 DB_HOST=localhost
@@ -141,35 +188,35 @@ PORT=8080
 
 ## 🗺️ Roadmap
 
-- [x] 1v1 Duel system with streak tracking
-- [x] JWT authentication
-- [x] WebSocket real-time updates
-- [x] Global leaderboard & badges
-- [ ] Friend system & private duels
-- [ ] Push notifications (FCM)
-- [ ] Group duels (3+ players)
-- [ ] iOS & Android store release
+- [x] Система 1v1 дуэлей с отслеживанием серий
+- [x] JWT-аутентификация
+- [x] WebSocket real-time обновления
+- [x] Глобальный лидерборд и бейджи
+- [ ] Система друзей и приватные дуэли
+- [ ] Push-уведомления (FCM)
+- [ ] Групповые дуэли (3+ игроков)
+- [ ] Релиз в App Store и Google Play
 
 ---
 
-## 🤝 Contributing
+## 🤝 Участие в разработке
 
-Contributions are welcome! Please open an issue first to discuss what you'd like to change.
+Предложения приветствуются! Сначала открой issue, чтобы обсудить изменение.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m 'feat: add your feature'`)
-4. Push to the branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
+1. Форкни репозиторий
+2. Создай ветку: `git checkout -b feature/my-feature`
+3. Закоммить: `git commit -m 'feat: добавить фичу'`
+4. Запушить: `git push origin feature/my-feature`
+5. Открой Pull Request
 
 ---
 
-## 📄 License
+## 📄 Лицензия
 
-Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
+Распространяется под лицензией MIT. Подробнее — в файле [`LICENSE`](LICENSE).
 
 ---
 
 <div align="center">
-  Made with ❤️ by <a href="https://github.com/rxritet">rxritet</a>
+  Сделано с ❤️ by <a href="https://github.com/rxritet">rxritet</a>
 </div>
