@@ -1,7 +1,6 @@
 # ⚔️ HabitDuel
 
 <div align="center">
-  <img src="https://via.placeholder.com/150" alt="HabitDuel Logo" width="150" height="150">
   <p><b>A competitive habit-tracking app built with Flutter and Dart Shelf.</b></p>
 
   [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?style=flat-square&logo=flutter)](https://flutter.dev/)
