@@ -13,6 +13,7 @@ import 'package:habitduel_server/handlers/leaderboard_handler.dart';
 import 'package:habitduel_server/middleware/jwt_middleware.dart';
 import 'package:habitduel_server/db/database.dart';
 import 'package:habitduel_server/websocket/duel_ws_handler.dart';
+import 'package:habitduel_server/cron/duel_expiry_cron.dart';
 
 Future<void> main() async {
   // Load environment
@@ -101,6 +102,10 @@ Future<void> main() async {
   // --- Start server ---
   final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
   print('🚀 HabitDuel server running on http://localhost:${server.port}');
+
+  // --- Start duel expiry cron ---
+  final expiryCron = DuelExpiryCron(wsHub: wsHub);
+  expiryCron.start();
 
   // Route incoming requests: WebSocket upgrades go to wsHub,
   // everything else goes through Shelf pipeline.
