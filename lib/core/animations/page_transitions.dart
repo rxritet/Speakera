@@ -6,26 +6,15 @@ import 'app_animations.dart';
 //  AppPageRoute
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// Global page-transition route for the HabitDuel app.
+/// Маршрут с анимацией слайда и затуханием по DESIGN.md §4.1.
 ///
-/// Implements the DESIGN.md §4.1 "Page Transition" spec:
-/// - **Duration:** 400 ms
-/// - **Curve:** `easeOutCubic`
-/// - **Entering screen:** slides in from the **right edge** (+100 % X → 0) with
-///   a fade-in from 0 % → 100 % opacity over the first 60 % of the animation.
-/// - **Leaving screen (secondary animation):** slides out to the **left** at
-///   −30 % X with a complementary fade to 70 % opacity, giving depth without
-///   completely hiding the previous screen.
+/// Новый экран въезжает справа (+100 % X), старый уходит влево (−0.3 X)
+/// с затемнением до 70 %. Длительность — 400 мс, кривая — easeOutCubic.
 ///
-/// ### Usage
 /// ```dart
-/// // Direct navigation
 /// Navigator.of(context).push(
 ///   AppPageRoute(builder: (ctx) => DetailScreen()),
 /// );
-///
-/// // Named routes — override onGenerateRoute in MaterialApp:
-/// onGenerateRoute: AppPageRoute.generateRoute,
 /// ```
 class AppPageRoute<T> extends PageRouteBuilder<T> {
   AppPageRoute({
@@ -34,9 +23,9 @@ class AppPageRoute<T> extends PageRouteBuilder<T> {
     super.maintainState = true,
     super.fullscreenDialog = false,
   }) : super(
-          transitionDuration: AppAnimations.pageTransitionDuration,   // 400 ms
+          transitionDuration: AppAnimations.pageTransitionDuration,   // 400 мс
           reverseTransitionDuration:
-              AppAnimations.pageTransitionDuration,                    // 400 ms
+              AppAnimations.pageTransitionDuration,                    // 400 мс
           pageBuilder: (context, animation, secondaryAnimation) =>
               builder(context),
           transitionsBuilder: _buildTransitions,
@@ -107,12 +96,9 @@ class AppPageRoute<T> extends PageRouteBuilder<T> {
     );
   }
 
-  // ── Named-route generator ────────────────────────────────────────────────
+  // ── Генератор именованных маршрутов ──────────────────────────────────────────
 
-  /// Drop-in replacement for [MaterialApp.onGenerateRoute].
-  ///
-  /// Maps `RouteSettings.name` to a builder via [routes], wrapping each in
-  /// [AppPageRoute] so every named navigation uses the correct transition.
+  /// Замена [MaterialApp.onGenerateRoute] — оборачивает билдеры в [AppPageRoute].
   ///
   /// ```dart
   /// MaterialApp(
@@ -133,23 +119,15 @@ class AppPageRoute<T> extends PageRouteBuilder<T> {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-//  AppSharedAxisTransition (horizontal variant, same spec)
+//  AppSharedAxisTransition
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// A stateless helper that produces the standard HabitDuel horizontal
-/// shared-axis transition for use inside [AnimatedSwitcher] or similar.
-///
-/// ```dart
-/// AnimatedSwitcher(
-///   duration: AppAnimations.pageTransitionDuration,
-///   transitionBuilder: AppSharedAxisTransition.horizontal,
-///   child: _currentPage,
-/// )
-/// ```
+/// Вспомогательный класс для использования стандартного перехода
+/// в [AnimatedSwitcher] и аналогичных виджетах.
 abstract final class AppSharedAxisTransition {
   AppSharedAxisTransition._();
 
-  /// Horizontal (left/right) transition matching [AppPageRoute].
+  /// Горизонтальный переход (cовпадает с [AppPageRoute]).
   static Widget horizontal(Widget child, Animation<double> animation) {
     final slide = Tween<Offset>(
       begin: const Offset(0.08, 0.0),
@@ -174,7 +152,7 @@ abstract final class AppSharedAxisTransition {
     );
   }
 
-  /// Vertical (up) transition — useful for modal-style screen pushes.
+  /// Вертикальный переход — подходит для экранов в стиле модального окна.
   static Widget vertical(Widget child, Animation<double> animation) {
     final slide = Tween<Offset>(
       begin: const Offset(0.0, 0.06),

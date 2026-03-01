@@ -6,19 +6,19 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 
 // ──────────────────────────────────────────────────────────────────────────────
-//  Enumerations & Data
+//  Перечисления и данные
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// Visual style of the [AppTabBar] indicator.
+/// Стиль индикатора вкладки.
 enum AppTabStyle {
-  /// Filled pill slides behind the selected label.
+  /// Закрашенная капсула скользит за выбранной вкладкой.
   pill,
 
-  /// Thin underline slides below the selected label.
+  /// Тонкая линия под выбранной вкладкой.
   underline,
 }
 
-/// Configuration for a single tab entry.
+/// Данные одной вкладки.
 class AppTabItem {
   const AppTabItem({
     required this.label,
@@ -26,13 +26,13 @@ class AppTabItem {
     this.badgeCount,
   });
 
-  /// Tab label text.
+  /// Текст вкладки.
   final String label;
 
-  /// Optional leading icon.
+  /// Иконка вкладки.
   final IconData? icon;
 
-  /// Optional numeric badge. `null` or `0` hides the badge.
+  /// Числовой бейдж (null или 0 — скрыт).
   final int? badgeCount;
 }
 
@@ -40,25 +40,10 @@ class AppTabItem {
 //  AppTabBar
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// A custom tab bar that supports [AppTabStyle.pill] and
-/// [AppTabStyle.underline] indicator styles.
+/// Таббар с поддержкой стилей [AppTabStyle.pill] и [AppTabStyle.underline].
 ///
-/// The active-indicator position is animated over **300 ms** with a
-/// `Curves.easeOut` curve using a real [AnimationController] so the indicator
-/// smoothly glides between any two tabs in either direction.
-///
-/// ### Usage
-/// ```dart
-/// AppTabBar(
-///   tabs: const [
-///     AppTabItem(label: 'Today'),
-///     AppTabItem(label: 'History'),
-///     AppTabItem(label: 'Stats'),
-///   ],
-///   selectedIndex: _selectedTab,
-///   onTabChanged: (i) => setState(() => _selectedTab = i),
-/// )
-/// ```
+/// Индикатор анимируется за 300 мс через [AnimationController] — плавно
+/// скользит между любыми двумя вкладками в любом направлении.
 class AppTabBar extends StatefulWidget {
   const AppTabBar({
     super.key,
@@ -71,16 +56,16 @@ class AppTabBar extends StatefulWidget {
 
   final List<AppTabItem> tabs;
 
-  /// Currently active tab (0-based).
+  /// Индекс активной вкладки.
   final int selectedIndex;
 
-  /// Callback when the user taps a different tab.
+  /// Вызывается при смене вкладки.
   final ValueChanged<int> onTabChanged;
 
-  /// Indicator style.
+  /// Стиль индикатора.
   final AppTabStyle style;
 
-  /// Height of the tab bar widget. Defaults to 44 px.
+  /// Высота виджета. По умолчанию 44 px.
   final double height;
 
   @override
@@ -89,11 +74,11 @@ class AppTabBar extends StatefulWidget {
 
 class _AppTabBarState extends State<AppTabBar>
     with SingleTickerProviderStateMixin {
-  // ── Animation for indicator position ────────────────────────────────────
+  // ── Анимация позиции индикатора ──────────────────────────────────────────
 
   late final AnimationController _ctrl;
 
-  /// Fractional index of the indicator (e.g. 1.5 = halfway between tab 1 & 2).
+  /// Дробная позиция индикатора (1.5 — между 1 и 2 вкладками).
   late double _fromIndex;
   late double _toIndex;
   late Animation<double> _indicatorPos;
@@ -117,7 +102,7 @@ class _AppTabBarState extends State<AppTabBar>
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.selectedIndex != widget.selectedIndex) {
-      // Capture current visual position as the new start
+      // Фиксируем текущую визуальную позицию как начало новой анимации.
       final currentPos = _fromIndex +
           (_toIndex - _fromIndex) * _ctrl.value;
       _fromIndex = currentPos;
@@ -140,7 +125,7 @@ class _AppTabBarState extends State<AppTabBar>
     super.dispose();
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
+  // ── Сборка ──────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +137,7 @@ class _AppTabBarState extends State<AppTabBar>
     };
   }
 
-  // ── Pill style ────────────────────────────────────────────────────────────
+  // ── Стиль капсулы ────────────────────────────────────────────────────────────
 
   Widget _buildPill(BuildContext context, bool isDark) {
     final containerBg = isDark
@@ -179,7 +164,7 @@ class _AppTabBarState extends State<AppTabBar>
 
               return Stack(
                 children: [
-                  // ── Animated pill indicator ──────────────────────────────
+                  // ── Анимированная капсула ──────────────────────────────────────
                   Positioned(
                     left: pos * tabW,
                     top: 0,
@@ -188,13 +173,13 @@ class _AppTabBarState extends State<AppTabBar>
                     child: _PillIndicator(isDark: isDark),
                   ),
 
-                  // ── Tab labels (sit above indicator) ─────────────────────
+                  // ── Подписи вкладок (поверх индикатора) ────────────────────
                   Row(
                     children: List.generate(tabCount, (i) {
                       final isSelected = i == widget.selectedIndex;
                       return _TabCell(
                         width: tabW,
-                        height: widget.height - 6, // minus container padding
+                        height: widget.height - 6, // без отступа контейнера
                         item: widget.tabs[i],
                         isSelected: isSelected,
                         isDark: isDark,
@@ -212,7 +197,7 @@ class _AppTabBarState extends State<AppTabBar>
     );
   }
 
-  // ── Underline style ───────────────────────────────────────────────────────
+  // ── Стиль подчёркивания ─────────────────────────────────────────────────────
 
   Widget _buildUnderline(BuildContext context, bool isDark) {
     final dividerColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
@@ -233,7 +218,7 @@ class _AppTabBarState extends State<AppTabBar>
               return Stack(
                 alignment: Alignment.bottomCenter,
                 children: [
-                  // Divider line
+                  // Разделитель.
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -241,7 +226,7 @@ class _AppTabBarState extends State<AppTabBar>
                     child: Divider(height: 1, color: dividerColor),
                   ),
 
-                  // ── Animated underline indicator ─────────────────────────
+                  // ── Анимированное подчёркивание ─────────────────────────────────
                   Positioned(
                     bottom: 0,
                     left: pos * tabW + tabW * 0.15,
@@ -250,7 +235,7 @@ class _AppTabBarState extends State<AppTabBar>
                     child: _UnderlineIndicator(isDark: isDark),
                   ),
 
-                  // ── Tab labels ────────────────────────────────────────────
+                  // ── Подписи вкладок ───────────────────────────────────────────────
                   Row(
                     children: List.generate(tabCount, (i) {
                       final isSelected = i == widget.selectedIndex;
@@ -276,7 +261,7 @@ class _AppTabBarState extends State<AppTabBar>
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-//  Indicators
+//  Индикаторы
 // ──────────────────────────────────────────────────────────────────────────────
 
 class _PillIndicator extends StatelessWidget {
@@ -323,7 +308,7 @@ class _UnderlineIndicator extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-//  Individual Tab Cell
+//  Ячейка вкладки
 // ──────────────────────────────────────────────────────────────────────────────
 
 class _TabCell extends StatelessWidget {

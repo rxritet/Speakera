@@ -11,18 +11,14 @@ import '../../../core/theme/app_spacing.dart';
 //  AppBottomSheet
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// A glass-styled modal bottom sheet with true spring-physics slide-up
-/// entrance and a centered 40 px wide drag-handle bar.
+/// Стеклянный модальный боттом-шит с пружинной анимацией и хэндлом.
 ///
-/// ### Usage
 /// ```dart
 /// await AppBottomSheet.show(
 ///   context: context,
 ///   builder: (ctx) => Column(children: [Text('Hello')]),
 /// );
 /// ```
-///
-/// The sheet pops with [Navigator.pop] exactly like a normal modal route.
 class AppBottomSheet extends StatelessWidget {
   const AppBottomSheet({
     super.key,
@@ -33,17 +29,15 @@ class AppBottomSheet extends StatelessWidget {
 
   final Widget child;
 
-  /// Inner padding. Defaults to `base` on all sides with extra top for handle.
+  /// Внутренние отступы. По умолчанию — base со всех сторон.
   final EdgeInsetsGeometry? padding;
 
-  /// Show the 40 px wide handle bar (default `true`).
+  /// Показывать хэндл (по умолчанию `true`).
   final bool showHandle;
 
-  // ── Static show helper ───────────────────────────────────────────────────
+  // ── Статический вызов ───────────────────────────────────────────────────
 
-  /// Show this sheet using a spring-physics route.
-  ///
-  /// [barrierDismissible] defaults to `true`.
+  /// Открывает шит с пружинной анимацией.
   static Future<T?> show<T>({
     required BuildContext context,
     required WidgetBuilder builder,
@@ -65,23 +59,23 @@ class AppBottomSheet extends StatelessWidget {
     );
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
+  // ── Сборка ──────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Glass surface colours matching GlassCardVariant.elevated
+    // Цвета стекла как у GlassCardVariant.elevated.
     final bgColor = isDark
-        ? AppColors.darkGlassBackground          // rgba(28,25,23,0.60)
-        : AppColors.lightGlassBackground;        // rgba(255,255,255,0.70)
+        ? AppColors.darkGlassBackground
+        : AppColors.lightGlassBackground;
     final borderColor = isDark
-        ? AppColors.darkGlassBorder.withAlpha(0x14)   // 8 % border in dark
-        : AppColors.lightGlassBorder.withAlpha(0x42); // 26 % border in light
+        ? AppColors.darkGlassBorder.withAlpha(0x14)   // 8%
+        : AppColors.lightGlassBorder.withAlpha(0x42); // 26%
 
-    // Night glow (primary) matching elevated variant
+    // Тень и свечение primary в тёмной теме.
     final boxShadows = [
-      // Elevated shadow
+      // Основная тень.
       BoxShadow(
         color: Colors.black.withAlpha(isDark ? 0x52 : 0x30),
         blurRadius: isDark ? 40 : 20,
@@ -136,7 +130,7 @@ class AppBottomSheet extends StatelessWidget {
   }
 }
 
-// ── Handle bar ───────────────────────────────────────────────────────────────
+// ── Хэндл ───────────────────────────────────────────────────────────────────
 
 class _HandleBar extends StatelessWidget {
   const _HandleBar({required this.isDark});
@@ -158,15 +152,10 @@ class _HandleBar extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-//  Spring-physics popup route
+//  Маршрут с пружинной физикой
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// A custom [PopupRoute] that drives its entrance with a [SpringSimulation],
-/// giving the sheet a natural elastic slide-up feel without a hard-coded curve.
-///
-/// The spring properties come from [AppAnimations.defaultSpring]
-/// (mass = 1, stiffness = 100, damping = 14 — slightly under-damped).
-/// Reverse (close) uses a simple 200 ms ease-in so the dismiss feels quick.
+/// [PopupRoute] с пружинной анимацией открытия и ease-in закрытием.
 class _SpringBottomSheetRoute<T> extends PopupRoute<T> {
   _SpringBottomSheetRoute({
     required this.builder,
@@ -186,34 +175,31 @@ class _SpringBottomSheetRoute<T> extends PopupRoute<T> {
   @override
   Color get barrierColor => AppColors.scrim;
 
-  // The spring entrance can take up to ~800 ms; the route's declared duration
-  // is only used when reversing (closing) since we override didPush().
+  // Длительность используется только при закрытии — открытие управляется пружиной.
   @override
   Duration get transitionDuration => const Duration(milliseconds: 600);
 
   @override
   Duration get reverseTransitionDuration =>
-      AppAnimations.modalCloseDuration; // 200 ms
+      AppAnimations.modalCloseDuration; // 200 мс
 
-  // ── Drive entrance with spring physics ───────────────────────────────────
+  // ── Пружинная анимация открытия ──────────────────────────────────────────
 
   @override
   TickerFuture didPush() {
-    // Call super for bookkeeping (sets _animationProxy.parent, starts forward());
-    // then immediately replace the simulation with spring physics so the
-    // @mustCallSuper contract is satisfied while still getting natural overshoot.
+    // super требуется для @mustCallSuper; затем заменяем анимацию на пружину.
     super.didPush();
     return controller!.animateWith(
       SpringSimulation(
-        AppAnimations.defaultSpring, // mass=1, stiffness=100, damping=14
-        0.0,  // start position
-        1.0,  // end position
-        0.0,  // initial velocity
+        AppAnimations.defaultSpring, // масса=1, жёсткость=100, демпфирование=14
+        0.0,
+        1.0,
+        0.0,
       ),
     );
   }
 
-  // ── Build transition (slide from bottom) ─────────────────────────────────
+  // ── Анимация перехода (слайд снизу) ──────────────────────────────────────
 
   @override
   Widget buildPage(BuildContext context, Animation<double> animation,
@@ -228,13 +214,13 @@ class _SpringBottomSheetRoute<T> extends PopupRoute<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    // Slide: bottom → resting position.
+    // Слайд снизу вверх — прямое значение пружины без дополнительных кривых.
     final slide = Tween<Offset>(
       begin: const Offset(0.0, 1.0),
       end: Offset.zero,
-    ).animate(animation); // raw spring value — no extra curve wrapper
+    ).animate(animation);
 
-    // Subtle opacity fade for the barrier + content
+    // Плавное появление за первые 40% анимации.
     final fade = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: animation,
