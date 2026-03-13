@@ -80,11 +80,19 @@ Future<void> main() async {
         continue;
       }
 
-      // Read and execute the migration
+      // Read and execute the migration (split by ';' to support multi-statement files)
       final sql = await file.readAsString();
       print('  ▶  $version — applying...');
 
-      await connection.execute(sql);
+      final statements = sql
+          .split(';')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+
+      for (final statement in statements) {
+        await connection.execute(statement);
+      }
 
       // Record the migration
       await connection.execute(
