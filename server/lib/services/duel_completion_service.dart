@@ -1,6 +1,7 @@
 import 'package:postgres/postgres.dart';
 
 import '../websocket/duel_ws_handler.dart';
+import 'badge_service.dart';
 
 /// Завершает дуэль, сравнивая серии участников и обновляя статистику.
 /// Вынесено, чтобы использоваться из checkins_handler и из cron-задачи.
@@ -58,6 +59,9 @@ Future<void> completeDuel(
       Sql.named('UPDATE users SET losses = losses + 1 WHERE id = @id::uuid'),
       parameters: {'id': loserId},
     );
+
+    // --- Badge Award: Winner ---
+    await BadgeService.checkAndAwardWinBadges(conn, winnerId);
   }
 
   wsHub?.notifyDuelCompleted(

@@ -1,10 +1,11 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:postgres/postgres.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 import '../db/database.dart';
+import '../services/badge_service.dart';
 import '../services/duel_completion_service.dart';
 import '../websocket/duel_ws_handler.dart';
 
@@ -152,6 +153,12 @@ class CheckinsHandler {
         'user': userId,
       },
     );
+
+    // --- Badge Awards ---
+    // 1. Check for first check-in badge
+    await BadgeService.checkAndAwardFirstCheckin(conn, userId);
+    // 2. Check for streak-based badges
+    await BadgeService.checkAndAwardStreakBadges(conn, userId, newStreak);
 
     // 11. Отправляем checkin_created через WebSocket
     final usernameRes = await conn.execute(
