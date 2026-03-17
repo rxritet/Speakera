@@ -4,7 +4,7 @@ import 'package:habitduel_server/services/badge_service.dart';
 import 'package:dotenv/dotenv.dart';
 
 void main() async {
-  final env = DotEnv(includePlatformEnvironment: true)..load(['.env']);
+  DotEnv(includePlatformEnvironment: true).load(['.env']);
   
   print('🧪 Starting Badge System Verification...');
   
