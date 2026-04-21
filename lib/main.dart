@@ -21,19 +21,19 @@ import 'presentation/screens/settings/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  const enableFirebaseWeb = bool.fromEnvironment(
-    'ENABLE_FIREBASE_WEB',
+  const disableFirebaseWeb = bool.fromEnvironment(
+    'DISABLE_FIREBASE_WEB',
     defaultValue: false,
   );
   
   try {
-    if (!kIsWeb || enableFirebaseWeb) {
+    if (!kIsWeb || !disableFirebaseWeb) {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
     } else {
       debugPrint(
-        'Firebase is disabled on web. Pass --dart-define=ENABLE_FIREBASE_WEB=true to enable it.',
+        'Firebase is disabled on web via DISABLE_FIREBASE_WEB=true.',
       );
     }
     if (!kIsWeb && FirebaseAuth.instance.currentUser == null) {
