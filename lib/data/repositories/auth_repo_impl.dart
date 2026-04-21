@@ -91,6 +91,12 @@ class AuthRepositoryImpl implements AuthRepository {
         losses: losses,
       );
 
+      // Если профиля в Firestore нет (например, был создан когда Firestore был недоступен), 
+      // то восстанавливаем его
+      if (profile == null) {
+        unawaited(_store.mirrorUserFromAuth(user));
+      }
+
       return LoginResult(user: user, token: await fbUser.getIdToken() ?? '');
     } on fb.FirebaseAuthException catch (e) {
       throw _mapFirebaseError(e);

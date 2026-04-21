@@ -9,17 +9,10 @@ import '../../domain/entities/leaderboard_entry.dart';
 
 /// Основной слой доступа к Firestore для HabitDuel.
 ///
-/// Автоматически отключается на Web без явного флага [ENABLE_FIREBASE_WEB].
+/// Работает на всех платформах включая Web.
 class HabitDuelFirestoreStore {
-  static const _enableFirebaseWeb = bool.fromEnvironment(
-    'ENABLE_FIREBASE_WEB',
-    defaultValue: false,
-  );
-
   HabitDuelFirestoreStore([FirebaseFirestore? firestore])
-      : _firestore = kIsWeb && !_enableFirebaseWeb
-            ? null
-            : (firestore ?? FirebaseFirestore.instance);
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore? _firestore;
 
