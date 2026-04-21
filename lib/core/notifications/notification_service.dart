@@ -66,7 +66,7 @@ class NotificationService {
 
   // ─── Вспомогательные детали уведомлений ─────────────────────────────────
 
-  NotificationDetails _normalDetails({String? payload}) {
+  NotificationDetails _normalDetails() {
     return const NotificationDetails(
       android: AndroidNotificationDetails(
         _channelId,

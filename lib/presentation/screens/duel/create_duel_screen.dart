@@ -351,7 +351,7 @@ class _TrustedCheckinSection extends StatelessWidget {
           if (enabled) ...[
             const SizedBox(height: 16),
             DropdownButtonFormField<HealthMetric>(
-              value: selectedMetric,
+              initialValue: selectedMetric,
               decoration: const InputDecoration(
                 labelText: 'Метрика',
                 prefixIcon: Icon(Icons.monitor_heart_outlined),

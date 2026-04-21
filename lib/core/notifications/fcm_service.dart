@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform, debugPrint;
+import 'package:flutter/widgets.dart' show GlobalKey, NavigatorState;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../core/constants/app_constants.dart';
@@ -100,8 +101,18 @@ class FcmService {
 
   void _handleMessageOpenedApp(RemoteMessage message) {
     debugPrint('FCM app opened from message: ${message.data}');
-    // TODO: навигация на нужный экран на основе data
-    // Navigator.pushNamed(context, '/duel', arguments: data['duel_id']);
+    final duelId = message.data['duel_id'] as String?;
+    if (duelId != null && duelId.isNotEmpty) {
+      final type = message.data['type'] as String?;
+      final route = type == 'group_lobby_ready' ? '/group-lobby' : '/duel';
+      _navigatorKey?.currentState?.pushNamed(route, arguments: duelId);
+    }
+  }
+
+  /// Глобальный ключ навигатора — должен быть установлен из main.dart.
+  static GlobalKey<NavigatorState>? _navigatorKey;
+  static void setNavigatorKey(GlobalKey<NavigatorState> key) {
+    _navigatorKey = key;
   }
 
   // ─── Token management ────────────────────────────────────────────

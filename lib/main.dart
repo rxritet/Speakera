@@ -20,6 +20,9 @@ import 'presentation/screens/profile/profile_screen.dart';
 import 'presentation/screens/profile/xp_progress_screen.dart';
 import 'presentation/screens/settings/settings_screen.dart';
 
+/// Глобальный ключ навигатора — пробрасывается в FcmService для навигации из пушей.
+final _navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -37,6 +40,7 @@ void main() async {
 
     // FCM инициализируем только на мобильных
     if (!kIsWeb) {
+      FcmService.setNavigatorKey(_navigatorKey);
       await FcmService.instance.init();
     }
   } catch (e) {
@@ -56,7 +60,6 @@ class HabitDuelApp extends ConsumerStatefulWidget {
 }
 
 class _HabitDuelAppState extends ConsumerState<HabitDuelApp> {
-  final _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {

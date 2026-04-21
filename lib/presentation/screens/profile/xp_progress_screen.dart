@@ -181,7 +181,7 @@ class _LevelCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
             child: AnimatedBuilder(
               animation: progressAnimation,
-              builder: (_, __) => LinearProgressIndicator(
+              builder: (_, _) => LinearProgressIndicator(
                 value: xp.levelProgress * progressAnimation.value,
                 backgroundColor: Colors.white.withValues(alpha: 0.25),
                 valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
