@@ -9,6 +9,7 @@ import '../../domain/entities/duel.dart';
 import '../../domain/entities/leaderboard_entry.dart';
 import '../../domain/entities/profile.dart';
 import '../models/duel_model.dart';
+import 'leaderboard_remote_ds.dart' show LeaderboardResult;
 
 /// Профиль пользователя — теперь только из Firestore.
 class FirebaseAwareProfileDataSource {
@@ -55,7 +56,7 @@ class FirebaseAwareLeaderboardDataSource {
       final result = await _store.readLeaderboard(limit: limit, offset: offset);
       return LeaderboardResult(entries: result.entries, total: result.total);
     } catch (_) {
-      return const LeaderboardResult(entries: [], total: 0);
+      return LeaderboardResult(entries: const [], total: 0);
     }
   }
 }

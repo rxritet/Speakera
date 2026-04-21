@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 
 import 'core/notifications/fcm_service.dart';
@@ -14,31 +14,29 @@ import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/auth/register_screen.dart';
 import 'presentation/screens/duel/create_duel_screen.dart';
 import 'presentation/screens/duel/duel_detail_screen.dart';
+import 'presentation/screens/duel/group_duel_lobby_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/leaderboard/leaderboard_screen.dart';
 import 'presentation/screens/profile/profile_screen.dart';
+import 'presentation/screens/profile/xp_progress_screen.dart';
 import 'presentation/screens/settings/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   const disableFirebaseWeb = bool.fromEnvironment(
     'DISABLE_FIREBASE_WEB',
     defaultValue: false,
   );
-  
+
   try {
     if (!kIsWeb || !disableFirebaseWeb) {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
-    } else {
-      debugPrint(
-        'Firebase is disabled on web via DISABLE_FIREBASE_WEB=true.',
-      );
     }
-    if (!kIsWeb && FirebaseAuth.instance.currentUser == null) {
-      await FirebaseAuth.instance.signInAnonymously();
-    }
+
+    // FCM инициализируем только на мобильных
     if (!kIsWeb) {
       await FcmService.instance.init();
     }
@@ -64,18 +62,12 @@ class _HabitDuelAppState extends ConsumerState<HabitDuelApp> {
   @override
   void initState() {
     super.initState();
-    // Проверяем наличие сохранённой сессии при запуске.
-    Future.microtask(
-      () => ref.read(authProvider.notifier).checkSession(),
-    );
-    Future.microtask(
-      () => ref.read(themeModeProvider.notifier).load(),
-    );
+    Future.microtask(() => ref.read(authProvider.notifier).checkSession());
+    Future.microtask(() => ref.read(themeModeProvider.notifier).load());
   }
 
   @override
   Widget build(BuildContext context) {
-    // Отслеживаем изменения состояния аутентификации и перенаправляем.
     ref.listen<AuthState>(authProvider, (prev, next) {
       if (next is Authenticated) {
         Future.microtask(() => FcmService.instance.syncCurrentUserToken());
@@ -109,6 +101,7 @@ class _HabitDuelAppState extends ConsumerState<HabitDuelApp> {
         '/leaderboard': (_) => const LeaderboardScreen(),
         '/profile': (_) => const ProfileScreen(),
         '/settings': (_) => const SettingsScreen(),
+        '/xp-progress': (_) => const XpProgressScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/duel') {
@@ -117,13 +110,19 @@ class _HabitDuelAppState extends ConsumerState<HabitDuelApp> {
             builder: (_) => DuelDetailScreen(duelId: duelId),
           );
         }
+        if (settings.name == '/group-lobby') {
+          final duelId = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (_) => GroupDuelLobbyScreen(duelId: duelId),
+          );
+        }
         return null;
       },
     );
   }
 }
 
-/// Shell with bottom navigation: Duels / Leaderboard / Profile.
+/// Shell с нижней навигацией: Duels / Leaderboard / Profile.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -176,17 +175,17 @@ class _MainShellState extends State<MainShell> {
           NavigationDestination(
             icon: Icon(Icons.local_fire_department_outlined),
             selectedIcon: Icon(Icons.local_fire_department),
-            label: 'Duels',
+            label: 'Дуэли',
           ),
           NavigationDestination(
             icon: Icon(Icons.leaderboard_outlined),
             selectedIcon: Icon(Icons.leaderboard),
-            label: 'Leaderboard',
+            label: 'Рейтинг',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
-            label: 'Profile',
+            label: 'Профиль',
           ),
         ],
       ),

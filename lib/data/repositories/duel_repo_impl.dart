@@ -6,9 +6,8 @@ import '../../core/firebase/habitduel_firestore_store.dart';
 import '../datasources/firebase_aware_data_sources.dart';
 
 class DuelRepositoryImpl implements DuelRepository {
-  const DuelRepositoryImpl(this._remoteDS, this._store);
+  const DuelRepositoryImpl(this._remoteDS);
   final FirebaseAwareDuelDataSource _remoteDS;
-  final HabitDuelFirestoreStore _store;
 
   @override
   Future<Duel> createDuel({

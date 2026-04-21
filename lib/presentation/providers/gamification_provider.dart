@@ -45,12 +45,13 @@ class UserXpNotifier extends StateNotifier<XpState> {
         return;
       }
       final xp = await _store.readUserXp(userId);
-      final coach = await _store.readLatestCoachMessage(userId);
+      final coachMessage = await _store.readLatestCoachMessage(userId);
 
       // Генерируем новое сообщение коуча если нет за эту неделю
-      AiCoachMessage? coachMessage = coach;
-      if (coach == null) {
-        coachMessage = AiCoachService.instance.generateWeeklyMessage(
+      AiCoachMessage? finalCoachMessage = coachMessage;
+      if (coachMessage == null) {
+        final bestStreakApprox = (xp?.totalXp ?? 0) > 0 ? ((xp!.totalXp) ~/ 10) : 0;
+        finalCoachMessage = AiCoachService.instance.generateWeeklyMessage(
           userId: userId,
           checkinsThisWeek: 0,
           bestStreak: xp?.totalXp ?? 0 > 0 ? (xp!.totalXp ~/ 10) : 0,
@@ -59,12 +60,12 @@ class UserXpNotifier extends StateNotifier<XpState> {
           losses: 0,
           xpThisWeek: xp?.weeklyXp ?? 0,
         );
-        await _store.saveCoachMessage(coachMessage);
+        await _store.saveCoachMessage(finalCoachMessage);
       }
 
       state = XpLoaded(
         xp: xp ?? UserXp(userId: userId),
-        coachMessage: coachMessage,
+        coachMessage: finalCoachMessage,
       );
     } catch (e) {
       state = XpError(e.toString());

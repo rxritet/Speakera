@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -53,7 +52,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       await _persistLocally(fbUser.uid, username);
-      unawaited(_store.upsertFirebaseUser(user));
+      unawaited(_store.mirrorUserFromAuth(user));
 
       return RegisterResult(user: user, token: await fbUser.getIdToken() ?? '');
     } on fb.FirebaseAuthException catch (e) {
@@ -155,20 +154,4 @@ class AuthRepositoryImpl implements AuthRepository {
     };
     return AuthFailure(message);
   }
-}
-
-/// Прямой Firestore репозиторий для чтения/записи профиля Firebase-пользователя.
-extension FirebaseUserStore on HabitDuelFirestoreStore {
-  Future<void> upsertFirebaseUser(User user) async {
-    return upsertProfile(
-      // Повторно используем метод upsertProfile с совместимым UserProfile
-      _userToProfile(user),
-    );
-  }
-}
-
-// Inline helper (domain model → profile)
-dynamic _userToProfile(User user) {
-  // Возвращаем Map — используется в upsertProfile через batch.set
-  return user;
 }
