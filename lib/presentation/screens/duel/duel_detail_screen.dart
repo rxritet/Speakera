@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-
-import '../../../core/notifications/notification_service.dart';
 import '../../../domain/entities/duel.dart';
 import '../../providers/duel_provider.dart';
 

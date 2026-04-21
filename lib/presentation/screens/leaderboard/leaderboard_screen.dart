@@ -43,7 +43,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
           ),
         ),
       LeaderboardLoaded(:final entries) => RefreshIndicator(
-          onRefresh: () => ref.read(leaderboardProvider.notifier).load(),
+          onRefresh: () async => ref.read(leaderboardProvider.notifier).load(),
           child: entries.isEmpty
               ? const Center(child: Text('No users yet'))
               : ListView.builder(

@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../core/errors/failures.dart';
 import '../../domain/entities/leaderboard_entry.dart';
 import 'core_providers.dart';
 

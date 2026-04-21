@@ -33,7 +33,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       DuelsListLoaded(:final duels) => duels.isEmpty
           ? const _EmptyBody()
           : RefreshIndicator(
-              onRefresh: () => ref.read(duelsListProvider.notifier).load(),
+              onRefresh: () async => ref.read(duelsListProvider.notifier).load(),
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: duels.length,
