@@ -76,3 +76,27 @@ dart run bin/export_postgres_for_firebase.dart
 ```
 
 The script writes table dumps and a manifest to `exports/firebase/` by default.
+
+## Import Command
+
+From `server/`, run:
+
+```bash
+dart run bin/import_firebase.dart
+```
+
+Required setup:
+- Place Firebase service account JSON at `server/../service-account.json`
+   or set `FIREBASE_SERVICE_ACCOUNT_PATH` in `server/.env`.
+- Ensure `FIREBASE_PROJECT_ID` is set (or present in `firebase.json`).
+
+Useful options:
+- `IMPORT_DRY_RUN=true` to validate source files and mapping without writes.
+- `EXPORT_DIR=...` to import from a non-default export location.
+
+Import writes the following document paths:
+- `users/{userId}`
+- `duels/{duelId}`
+- `duels/{duelId}/participants/{userId}`
+- `duels/{duelId}/checkins/{checkinId}`
+- `users/{userId}/badges/{badgeId}`
