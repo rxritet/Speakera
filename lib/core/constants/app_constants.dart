@@ -12,7 +12,10 @@ String get kBaseUrl {
   }
 
   if (kIsWeb) {
-    return 'http://localhost:8080';
+    final webUri = Uri.base;
+    final scheme = webUri.scheme == 'https' ? 'https' : 'http';
+    final host = webUri.host.isEmpty ? 'localhost' : webUri.host;
+    return '$scheme://$host:8080';
   }
 
   if (kDebugMode) {

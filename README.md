@@ -192,6 +192,30 @@ flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8081 \
 Это устраняет конфликт с DWDS (`/$dwdsSseHandler`) и ошибки вида
 `WebSocket connection ... failed` при открытии неверного порта.
 
+### 3.1 Один запуск для Web (Windows)
+
+Можно стартовать backend + frontend одной командой:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\dev-web.ps1
+```
+
+Скрипт делает:
+- проверку Docker daemon
+- `docker compose up -d db`
+- `docker compose run --rm migrate`
+- `docker compose up -d server`
+- запуск Flutter Web на `http://localhost:8081`
+
+Если нужен Firebase Web:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\dev-web.ps1 -EnableFirebaseWeb
+```
+
+Если получаешь ошибку вида `failed to connect to ... dockerDesktopLinuxEngine`,
+значит Docker Desktop не запущен или еще не успел поднять daemon.
+
 Для iOS Simulator используй:
 
 ```bash
