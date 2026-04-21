@@ -2,10 +2,87 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Development rules: allow the app to mirror data into Firestore.
-    // Tighten these rules again before production.
-    match /{document=**} {
-      allow read, write: if true;
+
+    // ─── Users ───────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // Any authenticated user can read profiles (for leaderboard/search)
+      allow read: if request.auth != null;
+      // Only the owner can write their own profile
+      allow write: if request.auth != null && request.auth.uid == userId;
+
+      // Badges sub-collection
+      match /badges/{badgeId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // FCM device tokens
+      match /devices/{deviceId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // XP & Level progress
+      match /xp/{docId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Week stats for AI Coach
+      match /weekStats/{weekId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // ─── Duels ───────────────────────────────────────────────────────────
+    match /duels/{duelId} {
+      // Any authenticated user who is a participant can read
+      allow read: if request.auth != null &&
+        (request.auth.uid in resource.data.participantIds ||
+         resource.data.status == 'open');
+
+      // Creator can create a duel
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.creatorId;
+
+      // Participants can update (accept, checkin status changes)
+      allow update: if request.auth != null &&
+        (request.auth.uid in resource.data.participantIds);
+
+      // Only creator can delete
+      allow delete: if request.auth != null &&
+        request.auth.uid == resource.data.creatorId;
+
+      // Participants sub-collection
+      match /participants/{participantId} {
+        allow read: if request.auth != null &&
+          (request.auth.uid in get(/databases/$(database)/documents/duels/$(duelId)).data.participantIds ||
+           get(/databases/$(database)/documents/duels/$(duelId)).data.status == 'open');
+        allow write: if request.auth != null &&
+          (request.auth.uid == participantId ||
+           request.auth.uid in get(/databases/$(database)/documents/duels/$(duelId)).data.participantIds);
+      }
+
+      // Check-ins sub-collection
+      match /checkins/{checkinId} {
+        allow read: if request.auth != null &&
+          request.auth.uid in get(/databases/$(database)/documents/duels/$(duelId)).data.participantIds;
+        allow create: if request.auth != null &&
+          request.auth.uid in get(/databases/$(database)/documents/duels/$(duelId)).data.participantIds &&
+          request.auth.uid == request.resource.data.userId;
+        allow update, delete: if false;
+      }
+    }
+
+    // ─── Invites ─────────────────────────────────────────────────────────
+    match /invites/{inviteCode} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.creatorId;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null &&
+        request.auth.uid == resource.data.creatorId;
     }
   }
 }

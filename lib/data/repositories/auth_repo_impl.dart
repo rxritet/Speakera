@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -9,18 +10,22 @@ import '../../core/errors/failures.dart';
 import '../../core/firebase/habitduel_firestore_store.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../datasources/auth_remote_ds.dart';
 
-/// Реализация [AuthRepository].
+/// Firebase Auth — основной провайдер аутентификации.
 ///
-/// Вызывает удалённый источник данных и сохраняет/удаляет JWT-токен
-/// через [FlutterSecureStorage].
+/// Логика:
+/// 1. Регистрация/вход через [FirebaseAuth].
+/// 2. При успехе записываем userId (=Firebase UID) в SecureStorage.
+/// 3. Дублируем профиль в Firestore через [HabitDuelFirestoreStore].
 class AuthRepositoryImpl implements AuthRepository {
-  const AuthRepositoryImpl(this._remoteDS, this._storage, this._store);
+  const AuthRepositoryImpl(this._storage, this._store);
 
-  final AuthRemoteDataSource _remoteDS;
   final FlutterSecureStorage _storage;
   final HabitDuelFirestoreStore _store;
+
+  fb.FirebaseAuth get _auth => fb.FirebaseAuth.instance;
+
+  // ─── Register ────────────────────────────────────────────────────────
 
   @override
   Future<RegisterResult> register({
@@ -28,70 +33,87 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    final response = await _remoteDS.register(
-      username: username,
-      email: email,
-      password: password,
-    );
+    _assertFirebaseReady();
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final fbUser = credential.user!;
 
-    // Сохраняем токен
-    await _storage.write(key: kTokenKey, value: response.token);
-    await _storage.write(key: kUserIdKey, value: response.user.id);
-    await _storage.write(key: kUsernameKey, value: response.user.username);
-    await _syncFirebaseUser(
-      email: email,
-      password: password,
-      username: response.user.username,
-      allowCreate: true,
-    );
-    unawaited(_store.mirrorUserFromAuth(
-      User(
-        id: response.user.id,
-        username: response.user.username,
-        email: response.user.email,
-        wins: response.user.wins,
-        losses: response.user.losses,
-      ),
-    ));
+      // Устанавливаем displayName сразу после создания
+      await fbUser.updateDisplayName(username);
 
-    return RegisterResult(user: response.user, token: response.token);
+      final user = User(
+        id: fbUser.uid,
+        username: username,
+        email: email,
+        wins: 0,
+        losses: 0,
+      );
+
+      await _persistLocally(fbUser.uid, username);
+      unawaited(_store.upsertFirebaseUser(user));
+
+      return RegisterResult(user: user, token: await fbUser.getIdToken() ?? '');
+    } on fb.FirebaseAuthException catch (e) {
+      throw _mapFirebaseError(e);
+    }
   }
+
+  // ─── Login ───────────────────────────────────────────────────────────
 
   @override
   Future<LoginResult> login({
     required String email,
     required String password,
   }) async {
-    final response = await _remoteDS.login(
-      email: email,
-      password: password,
-    );
+    _assertFirebaseReady();
+    try {
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final fbUser = credential.user!;
 
-    // Сохраняем токен
-    await _storage.write(key: kTokenKey, value: response.token);
-    await _storage.write(key: kUserIdKey, value: response.user.id);
-    await _storage.write(key: kUsernameKey, value: response.user.username);
-    await _syncFirebaseUser(
-      email: email,
-      password: password,
-      username: response.user.username,
-      allowCreate: true,
-    );
-    unawaited(_store.mirrorUserFromAuth(
-      User(
-        id: response.user.id,
-        username: response.user.username,
-        email: response.user.email,
-        wins: response.user.wins,
-        losses: response.user.losses,
-      ),
-    ));
+      // Пробуем прочитать профиль из Firestore
+      final profile = await _store.readProfile(fbUser.uid);
+      final username = profile?.username ?? fbUser.displayName ?? email.split('@').first;
+      final wins = profile?.wins ?? 0;
+      final losses = profile?.losses ?? 0;
 
-    return LoginResult(user: response.user, token: response.token);
+      await _persistLocally(fbUser.uid, username);
+
+      final user = User(
+        id: fbUser.uid,
+        username: username,
+        email: email,
+        wins: wins,
+        losses: losses,
+      );
+
+      return LoginResult(user: user, token: await fbUser.getIdToken() ?? '');
+    } on fb.FirebaseAuthException catch (e) {
+      throw _mapFirebaseError(e);
+    }
   }
+
+  // ─── Session management ──────────────────────────────────────────────
 
   @override
   Future<bool> hasToken() async {
+    // Приоритет: Firebase session
+    final currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      // Синхронизируем SecureStorage если нужно
+      final savedId = await _storage.read(key: kUserIdKey);
+      if (savedId == null || savedId.isEmpty) {
+        final username = currentUser.displayName ?? currentUser.email?.split('@').first ?? '';
+        await _persistLocally(currentUser.uid, username);
+      }
+      return true;
+    }
+    // Fallback: старый JWT токен (для совместимости при первом запуске)
     final token = await _storage.read(key: kTokenKey);
     return token != null && token.isNotEmpty;
   }
@@ -102,62 +124,51 @@ class AuthRepositoryImpl implements AuthRepository {
     await _storage.delete(key: kUserIdKey);
     await _storage.delete(key: kUsernameKey);
     if (Firebase.apps.isNotEmpty) {
-      await FirebaseAuth.instance.signOut();
+      await _auth.signOut();
     }
   }
 
-  Future<void> _syncFirebaseUser({
-    required String email,
-    required String password,
-    required String username,
-    required bool allowCreate,
-  }) async {
+  // ─── Helpers ─────────────────────────────────────────────────────────
+
+  Future<void> _persistLocally(String uid, String username) async {
+    await _storage.write(key: kUserIdKey, value: uid);
+    await _storage.write(key: kUsernameKey, value: username);
+    await _storage.write(key: kTokenKey, value: 'firebase');
+  }
+
+  void _assertFirebaseReady() {
     if (Firebase.apps.isEmpty) {
-      throw const AuthFailure(
-        'Firebase is not initialized. Enable Firebase and try again.',
-      );
-    }
-
-    final auth = FirebaseAuth.instance;
-    print('DEBUG: Attempting to sync Firebase Auth for: $email');
-
-    try {
-      await auth.signInWithEmailAndPassword(email: email, password: password);
-      print('DEBUG: Firebase Auth: Signed in');
-    } on FirebaseAuthException catch (e) {
-      if (allowCreate && e.code == 'user-not-found') {
-        try {
-          print('DEBUG: Firebase Auth: User not found, creating...');
-          await auth.createUserWithEmailAndPassword(
-            email: email,
-            password: password,
-          );
-          print('DEBUG: Firebase Auth: Created');
-        } on FirebaseAuthException catch (createError) {
-          if (createError.code == 'email-already-in-use') {
-            await auth.signInWithEmailAndPassword(
-              email: email,
-              password: password,
-            );
-            print('DEBUG: Firebase Auth: Signed in after creation error');
-          } else {
-            print('DEBUG: Firebase Auth creation error: ${createError.code}');
-            throw AuthFailure(
-              'Firebase sync failed: ${createError.message ?? createError.code}',
-            );
-          }
-        }
-      } else {
-        print('DEBUG: Firebase Auth sign-in error: ${e.code}');
-        throw AuthFailure('Firebase sync failed: ${e.message ?? e.code}');
-      }
-    }
-
-    final currentUser = auth.currentUser;
-    if (currentUser != null &&
-        username.isNotEmpty &&
-        currentUser.displayName != username) {
-      await currentUser.updateDisplayName(username);
+      throw const AuthFailure('Firebase is not initialized.');
     }
   }
+
+  AuthFailure _mapFirebaseError(fb.FirebaseAuthException e) {
+    final message = switch (e.code) {
+      'email-already-in-use' => 'Этот email уже занят. Попробуйте войти.',
+      'user-not-found' => 'Пользователь не найден.',
+      'wrong-password' => 'Неверный пароль.',
+      'invalid-email' => 'Некорректный email.',
+      'weak-password' => 'Пароль слишком слабый. Минимум 6 символов.',
+      'too-many-requests' => 'Слишком много попыток. Попробуйте позже.',
+      'invalid-credential' => 'Неверный email или пароль.',
+      _ => 'Ошибка авторизации: ${e.message ?? e.code}',
+    };
+    return AuthFailure(message);
+  }
+}
+
+/// Прямой Firestore репозиторий для чтения/записи профиля Firebase-пользователя.
+extension FirebaseUserStore on HabitDuelFirestoreStore {
+  Future<void> upsertFirebaseUser(User user) async {
+    return upsertProfile(
+      // Повторно используем метод upsertProfile с совместимым UserProfile
+      _userToProfile(user),
+    );
+  }
+}
+
+// Inline helper (domain model → profile)
+dynamic _userToProfile(User user) {
+  // Возвращаем Map — используется в upsertProfile через batch.set
+  return user;
 }
