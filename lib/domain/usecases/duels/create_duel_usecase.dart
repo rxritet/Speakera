@@ -10,12 +10,24 @@ class CreateDuelUseCase {
     String? description,
     required int durationDays,
     String? opponentUsername,
+    DuelType type = DuelType.duel,
+    int maxParticipants = 2,
+    String? habitCategory,
+    bool isTrustedCheckin = false,
+    String? healthMetric,
+    double? healthTargetValue,
   }) {
     return _repo.createDuel(
       habitName: habitName,
       description: description,
       durationDays: durationDays,
       opponentUsername: opponentUsername,
+      type: type,
+      maxParticipants: maxParticipants,
+      habitCategory: habitCategory,
+      isTrustedCheckin: isTrustedCheckin,
+      healthMetric: healthMetric,
+      healthTargetValue: healthTargetValue,
     );
   }
 }

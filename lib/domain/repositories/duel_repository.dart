@@ -8,19 +8,34 @@ abstract class DuelRepository {
     String? description,
     required int durationDays,
     String? opponentUsername,
+    DuelType type = DuelType.duel,
+    int maxParticipants = 2,
+    String? habitCategory,
+    bool isTrustedCheckin = false,
+    String? healthMetric,
+    double? healthTargetValue,
   });
 
-  /// Принять ожидающий дуэль.
+  /// Принять ожидающую дуэль.
   Future<Duel> acceptDuel(String duelId);
 
   /// Список дуэлей пользователя.
   Future<List<Duel>> getMyDuels();
 
-  /// Полная информация о дуэле по id.
+  /// Полная информация о дуэли по id.
   Future<Duel> getDuelDetail(String duelId);
 
-  /// Выполнить check-in в дуэле.
+  /// Выполнить check-in в дуэли.
   Future<CheckInResult> checkIn(String duelId, {String? note});
+
+  /// Присоединиться к групповой дуэли по invite code.
+  Future<Duel?> joinGroupByInviteCode(String inviteCode);
+
+  /// Real-time stream конкретной дуэли.
+  Stream<Duel?> watchDuel(String duelId);
+
+  /// Real-time stream списка дуэлей пользователя.
+  Stream<List<Duel>> watchMyDuels(String userId);
 }
 
 class CheckInResult {
