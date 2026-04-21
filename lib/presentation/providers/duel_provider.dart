@@ -141,6 +141,15 @@ class DuelDetailNotifier extends StateNotifier<DuelDetailState> {
       return false;
     }
   }
+
+  Future<bool> join(String duelId) async {
+    try {
+      await _ref.read(duelRepositoryProvider).joinOpenDuel(duelId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 }
 
 final duelDetailProvider =

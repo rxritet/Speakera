@@ -59,6 +59,9 @@ class DuelRepositoryImpl implements DuelRepository {
   }
 
   @override
+  Future<void> joinOpenDuel(String duelId) => _remoteDS.joinOpenDuel(duelId);
+
+  @override
   Stream<Duel?> watchDuel(String duelId) => _remoteDS.watchDuel(duelId);
 
   @override

@@ -179,6 +179,19 @@ class FirebaseAwareDuelDataSource {
     return duel != null ? _toDuelModel(duel) : null;
   }
 
+  Future<void> joinOpenDuel(String duelId) async {
+    final userId = await _storage.read(key: kUserIdKey);
+    final username = await _storage.read(key: kUsernameKey);
+
+    if (userId == null || userId.isEmpty) throw const AuthFailure('Not authenticated');
+
+    await _store.joinOpenDuel(
+      duelId: duelId,
+      userId: userId,
+      username: username ?? userId,
+    );
+  }
+
   /// Real-time stream дуэли.
   Stream<DuelModel?> watchDuel(String duelId) {
     return _store.watchDuel(duelId).map((d) => d != null ? _toDuelModel(d) : null);

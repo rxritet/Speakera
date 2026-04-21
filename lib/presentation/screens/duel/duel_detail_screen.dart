@@ -64,9 +64,25 @@ class _DuelDetailScreenState extends ConsumerState<DuelDetailScreen> {
     }
   }
 
+  Future<void> _handleJoin() async {
+    final ok = await ref
+        .read(duelDetailProvider.notifier)
+        .join(widget.duelId);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(ok ? 'Joined lobby!' : 'Join failed'),
+        ),
+      );
+      if (ok) ref.read(duelsListProvider.notifier).load();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(duelDetailProvider);
+    final authState = ref.watch(authProvider);
+    final currentUserId = authState is Authenticated ? authState.user.id : null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Duel Detail')),
@@ -79,8 +95,10 @@ class _DuelDetailScreenState extends ConsumerState<DuelDetailScreen> {
           ),
         DuelDetailLoaded(:final duel) => _DuelBody(
             duel: duel,
+            currentUserId: currentUserId,
             onCheckIn: _handleCheckIn,
             onAccept: _handleAccept,
+            onJoin: _handleJoin,
             isCheckinLoading: _isCheckinLoading,
           ),
       },
@@ -93,19 +111,26 @@ class _DuelDetailScreenState extends ConsumerState<DuelDetailScreen> {
 class _DuelBody extends StatelessWidget {
   const _DuelBody({
     required this.duel,
+    required this.currentUserId,
     required this.onCheckIn,
     required this.onAccept,
+    required this.onJoin,
     required this.isCheckinLoading,
   });
   final Duel duel;
+  final String? currentUserId;
   final VoidCallback onCheckIn;
   final VoidCallback onAccept;
+  final VoidCallback onJoin;
   final bool isCheckinLoading;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dateFmt = DateFormat.yMMMd();
+    
+    final isParticipant = currentUserId != null && 
+        duel.participants.any((p) => p.userId == currentUserId);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -139,6 +164,13 @@ class _DuelBody extends StatelessWidget {
                       icon: Icons.flag,
                       label: duel.status.toUpperCase(),
                     ),
+                    if (duel.isGroup) ...[
+                      const SizedBox(width: 12),
+                      _InfoChip(
+                        icon: Icons.people,
+                        label: '${duel.participants.length}/${duel.maxParticipants}',
+                      ),
+                    ],
                   ],
                 ),
                 if (duel.startsAt != null) ...[
@@ -164,12 +196,15 @@ class _DuelBody extends StatelessWidget {
         if (duel.participants.isNotEmpty) ...[
           Text('Participants', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
-          ...duel.participants.map((p) => _ParticipantTile(participant: p)),
+          ...duel.participants.map((p) => _ParticipantTile(
+                participant: p,
+                isMe: p.userId == currentUserId,
+              )),
           const SizedBox(height: 16),
         ],
 
         // ── Action buttons ──
-        if (duel.status == 'active')
+        if (duel.status == 'active' && isParticipant)
           FilledButton.icon(
             onPressed: isCheckinLoading ? null : onCheckIn,
             icon: isCheckinLoading
@@ -181,11 +216,17 @@ class _DuelBody extends StatelessWidget {
                 : const Icon(Icons.check_circle),
             label: Text(isCheckinLoading ? 'Checking in…' : 'Check In'),
           ),
-        if (duel.status == 'pending')
+        if (duel.status == 'pending' && !isParticipant)
           FilledButton.icon(
             onPressed: onAccept,
             icon: const Icon(Icons.handshake),
             label: const Text('Accept Duel'),
+          ),
+        if (duel.status == 'open' && !isParticipant)
+          FilledButton.icon(
+            onPressed: onJoin,
+            icon: const Icon(Icons.group_add),
+            label: const Text('Join Lobby'),
           ),
 
         const SizedBox(height: 24),
@@ -218,14 +259,21 @@ class _InfoChip extends StatelessWidget {
 }
 
 class _ParticipantTile extends StatelessWidget {
-  const _ParticipantTile({required this.participant});
+  const _ParticipantTile({required this.participant, this.isMe = false});
   final DuelParticipant participant;
+  final bool isMe;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: const CircleAvatar(child: Icon(Icons.person)),
-      title: Text(participant.username),
+      leading: CircleAvatar(
+        backgroundColor: isMe ? Theme.of(context).colorScheme.primaryContainer : null,
+        child: Icon(Icons.person, color: isMe ? Theme.of(context).colorScheme.primary : null),
+      ),
+      title: Text(
+        participant.username + (isMe ? ' (You)' : ''),
+        style: isMe ? const TextStyle(fontWeight: FontWeight.bold) : null,
+      ),
       trailing: Text(
         '${participant.streak} 🔥',
         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

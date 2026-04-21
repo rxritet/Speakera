@@ -31,6 +31,9 @@ abstract class DuelRepository {
   /// Присоединиться к групповой дуэли по invite code.
   Future<Duel?> joinGroupByInviteCode(String inviteCode);
 
+  /// Присоединиться к открытой дуэли (лобби).
+  Future<void> joinOpenDuel(String duelId);
+
   /// Real-time stream конкретной дуэли.
   Stream<Duel?> watchDuel(String duelId);
 
