@@ -35,17 +35,39 @@ class DuelsListError extends DuelsListState {
 class DuelsListNotifier extends StateNotifier<DuelsListState> {
   DuelsListNotifier(this._ref) : super(const DuelsListInitial());
   final Ref _ref;
-  StreamSubscription<List<Duel>>? _sub;
+  StreamSubscription<List<Duel>>? _myDuelsSub;
+  StreamSubscription<List<Duel>>? _openGroupSub;
+
+  List<Duel> _myDuels = [];
+  List<Duel> _openGroups = [];
+  bool _myDuelsLoaded = false;
+  bool _openGroupsLoaded = false;
 
   void load() {
     state = const DuelsListLoading();
-    _sub?.cancel();
+    _myDuelsSub?.cancel();
+    _openGroupSub?.cancel();
+    _myDuelsLoaded = false;
+    _openGroupsLoaded = false;
+    _myDuels = [];
+    _openGroups = [];
 
     final authState = _ref.read(authProvider);
     if (authState is Authenticated) {
       final repo = _ref.read(duelRepositoryProvider);
-      _sub = repo.watchMyDuels(authState.user.id).listen((duels) {
-        state = DuelsListLoaded(duels);
+      
+      _myDuelsSub = repo.watchMyDuels(authState.user.id).listen((duels) {
+        _myDuels = duels;
+        _myDuelsLoaded = true;
+        _emitCombined();
+      }, onError: (e) {
+        state = DuelsListError(e.toString());
+      });
+
+      _openGroupSub = repo.watchOpenGroupDuels().listen((duels) {
+        _openGroups = duels;
+        _openGroupsLoaded = true;
+        _emitCombined();
       }, onError: (e) {
         state = DuelsListError(e.toString());
       });
@@ -54,9 +76,29 @@ class DuelsListNotifier extends StateNotifier<DuelsListState> {
     }
   }
 
+  void _emitCombined() {
+    // Only emit when both streams have emitted at least once to avoid brief jumps.
+    if (!_myDuelsLoaded || !_openGroupsLoaded) return;
+    
+    final Map<String, Duel> mergedMap = {};
+    for (final d in _openGroups) {
+      mergedMap[d.id] = d;
+    }
+    // _myDuels overrides _openGroups so that if you join an open group, 
+    // it will be correctly rendered based on user's participant state.
+    for (final d in _myDuels) {
+      mergedMap[d.id] = d;
+    }
+    
+    final mergedList = mergedMap.values.toList();
+    mergedList.sort((a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+    state = DuelsListLoaded(mergedList);
+  }
+
   @override
   void dispose() {
-    _sub?.cancel();
+    _myDuelsSub?.cancel();
+    _openGroupSub?.cancel();
     super.dispose();
   }
 }

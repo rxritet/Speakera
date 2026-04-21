@@ -249,25 +249,14 @@ class HabitDuelFirestoreStore {
     });
   }
 
-  /// Stream для real-time обновлений списка дуэлей пользователя (мои + открытые группы).
+  /// Stream для real-time обновлений списка дуэлей пользователя.
   Stream<List<Duel>> watchMyDuels(String userId) {
     if (!_isEnabled) return const Stream.empty();
     return _duels
-        .where(Filter.or(
-          Filter('participantIds', arrayContains: userId),
-          Filter.and(
-            Filter('type', isEqualTo: 'group'),
-            Filter('status', isEqualTo: 'open'),
-          ),
-        ))
-        // .orderBy('createdAt', descending: true) // Внимание: OR-фильтр с orderBy требует составных индексов или может не работать напрямую без них
+        .where('participantIds', arrayContains: userId)
+        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) {
-          final list = snap.docs.map(_duelFromSnapshot).toList();
-          // Сортируем вручную на клиенте, чтобы не требовать сложных индексов Firestore для OR-запроса
-          list.sort((a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
-          return list;
-        });
+        .map((snap) => snap.docs.map(_duelFromSnapshot).toList());
   }
 
   /// Stream для открытых групповых дуэлей.
