@@ -1,120 +1,108 @@
 {
-    "root_group": {
-        "groups": {},
-        "checks": {
-                "register status is 201": {
-                    "passes": 574,
-                    "fails": 0,
-                    "name": "register status is 201",
-                    "path": "::register status is 201",
-                    "id": "f57ddd483e45441e8c8271b44196eedd"
-                },
-                "register returns token": {
-                    "name": "register returns token",
-                    "path": "::register returns token",
-                    "id": "a6740cabacd27ff92691498d0d37e316",
-                    "passes": 574,
-                    "fails": 0
-                },
-                "me status is 200": {
-                    "passes": 574,
-                    "fails": 0,
-                    "name": "me status is 200",
-                    "path": "::me status is 200",
-                    "id": "b894aa1b61c12a8515bf01c77360b9f8"
-                },
-                "create duel status is 201": {
-                    "path": "::create duel status is 201",
-                    "id": "d58eeeab8c2c0f87990785935613b88c",
-                    "passes": 574,
-                    "fails": 0,
-                    "name": "create duel status is 201"
-                },
-                "list duels status is 200": {
-                    "name": "list duels status is 200",
-                    "path": "::list duels status is 200",
-                    "id": "bb533b9d3a4c2f5626dfe795884bb71f",
-                    "passes": 574,
-                    "fails": 0
-                },
-                "leaderboard is reachable": {
-                    "name": "leaderboard is reachable",
-                    "path": "::leaderboard is reachable",
-                    "id": "0d68f43e8b3bad552142ddd508be5cac",
-                    "passes": 574,
-                    "fails": 0
-                }
-            },
-        "name": "",
-        "path": "",
-        "id": "d41d8cd98f00b204e9800998ecf8427e"
-    },
     "metrics": {
-        "data_sent": {
-            "count": 1018658,
-            "rate": 32917.346486652306
-        },
-        "http_reqs": {
-            "count": 2870,
-            "rate": 92.74239677761537
-        },
-        "iterations": {
-            "count": 574,
-            "rate": 18.548479355523074
-        },
-        "http_req_waiting": {
-            "med": 5.6221195,
-            "max": 104.369687,
-            "p(90)": 36.9215953,
-            "p(95)": 51.56535564999983,
-            "avg": 13.379291714634142,
-            "min": 1.552427
-        },
-        "data_received": {
-            "count": 5201195,
-            "rate": 168073.6203511321
-        },
         "http_req_receiving": {
-            "min": 0.021494,
-            "med": 0.072615,
-            "max": 0.694158,
-            "p(90)": 0.1564328,
-            "p(95)": 0.1887335,
-            "avg": 0.08721819163763085
+            "med": 0.06828400000000001,
+            "max": 1.166382,
+            "p(90)": 0.12310300000000002,
+            "p(95)": 0.16026044999999994,
+            "avg": 0.08033197222222213,
+            "min": 0.021562
         },
-        "http_req_sending": {
-            "avg": 0.021671620209059203,
-            "min": 0.004823,
-            "med": 0.0123365,
-            "max": 1.470445,
-            "p(90)": 0.03735439999999999,
-            "p(95)": 0.05705894999999993
+        "vus": {
+            "value": 5,
+            "min": 5,
+            "max": 5
         },
-        "vus_max": {
-            "value": 20,
-            "min": 20,
-            "max": 20
+        "iteration_duration": {
+            "p(95)": 1257.5849952,
+            "avg": 1233.9663991333332,
+            "min": 1212.074081,
+            "med": 1236.221784,
+            "max": 1260.357851,
+            "p(90)": 1252.2051398
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 540,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_duration{name:duels_accept}": {
+            "avg": 21.34844942222222,
+            "min": 14.414712,
+            "med": 21.176606,
+            "max": 26.060591,
+            "p(90)": 24.2502464,
+            "p(95)": 25.2193822,
+            "thresholds": {
+                "p(95)<700": false
+            }
         },
         "http_req_duration{expected_response:true}": {
-            "max": 104.509675,
-            "p(90)": 37.018115,
-            "p(95)": 51.67724374999987,
-            "avg": 13.488181526480851,
-            "min": 1.616735,
-            "med": 5.7456325
+            "p(90)": 47.0917607,
+            "p(95)": 51.55669475,
+            "avg": 19.297704638888884,
+            "min": 1.44017,
+            "med": 12.496109,
+            "max": 68.719568
+        },
+        "http_req_connecting": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.0014267407407407408,
+            "min": 0,
+            "med": 0,
+            "max": 0.191934
+        },
+        "http_req_duration{name:duels_detail_creator}": {
+            "p(90)": 19.742587800000003,
+            "p(95)": 22.4031286,
+            "avg": 15.871455199999998,
+            "min": 13.068189,
+            "med": 14.86666,
+            "max": 23.352973,
+            "thresholds": {
+                "p(95)<700": false
+            }
+        },
+        "vus_max": {
+            "value": 5,
+            "min": 5,
+            "max": 5
+        },
+        "iterations": {
+            "count": 45,
+            "rate": 4.04893309114943
+        },
+        "http_reqs": {
+            "count": 540,
+            "rate": 48.58719709379316
+        },
+        "data_sent": {
+            "count": 205965,
+            "rate": 18531.96675819094
+        },
+        "data_received": {
+            "count": 466795,
+            "rate": 42000.48271740218
         },
         "checks": {
-            "passes": 3444,
+            "passes": 540,
             "fails": 0,
             "value": 1
         },
-        "iteration_duration": {
-            "min": 1013.93206,
-            "med": 1034.8095075,
-            "max": 1294.72506,
-            "p(90)": 1193.3754122,
-            "p(95)": 1263.6060355,
-            "avg": 1068.8042987334481
+        "http_req_duration{name:duels_checkin_opponent}": {
+            "avg": 48.1007534,
+            "min": 41.876082,
+            "med": 47.253331,
+            "max": 58.85695,
+            "p(90)": 55.20250100000001,
+            "p(95)": 58.280523,
+            "thresholds": {
+                "p(95)<700": false
+            }
         },
         "http_req_tls_handshaking": {
             "p(90)": 0,
@@ -124,46 +112,162 @@
             "med": 0,
             "max": 0
         },
-        "http_req_blocked": {
-            "med": 0.002349,
-            "max": 4.178677,
-            "p(90)": 0.0045821,
-            "p(95)": 0.005640199999999999,
-            "avg": 0.012067638327526178,
-            "min": 0.000921
-        },
-        "http_req_failed": {
-            "passes": 0,
-            "fails": 2870,
+        "http_req_duration{name:duels_checkin_creator}": {
+            "min": 43.376348,
+            "med": 50.790667,
+            "max": 68.719568,
+            "p(90)": 60.7878038,
+            "p(95)": 61.415217399999996,
+            "avg": 51.63583062222223,
             "thresholds": {
-                "rate<0.05": false
-            },
-            "value": 0
+                "p(95)<700": false
+            }
         },
-        "http_req_connecting": {
-            "p(95)": 0,
-            "avg": 0.0019463484320557496,
-            "min": 0,
-            "med": 0,
-            "max": 0.532278,
-            "p(90)": 0
+        "http_req_waiting": {
+            "min": 1.34665,
+            "med": 12.339444,
+            "max": 68.542912,
+            "p(90)": 47.017299400000006,
+            "p(95)": 51.404897999999996,
+            "avg": 19.20168436851852
         },
-        "vus": {
-            "min": 20,
-            "max": 20,
-            "value": 20
+        "http_req_sending": {
+            "p(90)": 0.027976600000000004,
+            "p(95)": 0.0332699,
+            "avg": 0.015688298148148164,
+            "min": 0.005496,
+            "med": 0.012111,
+            "max": 0.117473
+        },
+        "http_req_duration{name:duels_create_directed}": {
+            "med": 29.278924,
+            "max": 40.682437,
+            "p(90)": 37.90081240000001,
+            "p(95)": 40.4971294,
+            "avg": 30.55777213333333,
+            "min": 26.644687,
+            "thresholds": {
+                "p(95)<700": false
+            }
+        },
+        "http_req_duration{name:duels_detail_opponent}": {
+            "med": 14.167232,
+            "max": 24.763231,
+            "p(90)": 21.112845000000007,
+            "p(95)": 24.206726999999997,
+            "avg": 15.346143333333329,
+            "min": 10.72687,
+            "thresholds": {
+                "p(95)<700": false
+            }
         },
         "http_req_duration": {
-            "min": 1.616735,
-            "med": 5.7456325,
-            "max": 104.509675,
-            "p(90)": 37.018115,
-            "p(95)": 51.67724374999987,
-            "avg": 13.488181526480851,
-            "thresholds": {
-                "p(95)<800": false,
-                "p(99)<1500": false
-            }
+            "p(90)": 47.0917607,
+            "p(95)": 51.55669475,
+            "avg": 19.297704638888884,
+            "min": 1.44017,
+            "med": 12.496109,
+            "max": 68.719568
+        },
+        "http_req_blocked": {
+            "avg": 0.022945574074074084,
+            "min": 0.001046,
+            "med": 0.0021115,
+            "max": 2.228421,
+            "p(90)": 0.0034703,
+            "p(95)": 0.004096199999999999
         }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "lifecycle creator register is 201": {
+                    "name": "lifecycle creator register is 201",
+                    "path": "::lifecycle creator register is 201",
+                    "id": "97f210e5959137b573b47f7e54786e02",
+                    "passes": 45,
+                    "fails": 0
+                },
+                "lifecycle opponent register is 201": {
+                    "name": "lifecycle opponent register is 201",
+                    "path": "::lifecycle opponent register is 201",
+                    "id": "906f3c054529d3c67c409576cf90f38f",
+                    "passes": 45,
+                    "fails": 0
+                },
+                "lifecycle creator login is 200": {
+                    "name": "lifecycle creator login is 200",
+                    "path": "::lifecycle creator login is 200",
+                    "id": "537608f1be5876af98c3a87fff61cd2f",
+                    "passes": 45,
+                    "fails": 0
+                },
+                "lifecycle opponent login is 200": {
+                    "fails": 0,
+                    "name": "lifecycle opponent login is 200",
+                    "path": "::lifecycle opponent login is 200",
+                    "id": "a3c7ca0f3e503494abd66abcbaebe0ab",
+                    "passes": 45
+                },
+                "lifecycle duel create is 201": {
+                    "name": "lifecycle duel create is 201",
+                    "path": "::lifecycle duel create is 201",
+                    "id": "a9ba178b5a34096e0d1c8236e0cea3be",
+                    "passes": 45,
+                    "fails": 0
+                },
+                "lifecycle duel accept is 200": {
+                    "passes": 45,
+                    "fails": 0,
+                    "name": "lifecycle duel accept is 200",
+                    "path": "::lifecycle duel accept is 200",
+                    "id": "849bf65b41cd615ad10896e349d06f90"
+                },
+                "lifecycle creator duel list is 200": {
+                    "name": "lifecycle creator duel list is 200",
+                    "path": "::lifecycle creator duel list is 200",
+                    "id": "06371caa50d3061b8c634fbddf0c6d94",
+                    "passes": 45,
+                    "fails": 0
+                },
+                "lifecycle opponent duel list is 200": {
+                    "name": "lifecycle opponent duel list is 200",
+                    "path": "::lifecycle opponent duel list is 200",
+                    "id": "d9802b2b1dcc4e1219c6d059d473303d",
+                    "passes": 45,
+                    "fails": 0
+                },
+                "lifecycle creator checkin is 201": {
+                    "id": "e5cdd191e39e366a6131c2fb90da16b3",
+                    "passes": 45,
+                    "fails": 0,
+                    "name": "lifecycle creator checkin is 201",
+                    "path": "::lifecycle creator checkin is 201"
+                },
+                "lifecycle opponent checkin is 201": {
+                    "name": "lifecycle opponent checkin is 201",
+                    "path": "::lifecycle opponent checkin is 201",
+                    "id": "437ecd9a4b69a31009232a8cdc6b9ab2",
+                    "passes": 45,
+                    "fails": 0
+                },
+                "lifecycle creator detail is 200": {
+                    "path": "::lifecycle creator detail is 200",
+                    "id": "65ef37d19f6f00d16f117d8a2f8ad556",
+                    "passes": 45,
+                    "fails": 0,
+                    "name": "lifecycle creator detail is 200"
+                },
+                "lifecycle opponent detail is 200": {
+                    "path": "::lifecycle opponent detail is 200",
+                    "id": "7a476ff262e60dafbb2307bc2a3ef7c0",
+                    "passes": 45,
+                    "fails": 0,
+                    "name": "lifecycle opponent detail is 200"
+                }
+            }
     }
 }
