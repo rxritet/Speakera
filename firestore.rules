@@ -2,87 +2,145 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
 
-    // ─── Users ───────────────────────────────────────────────────────────
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function duelDoc(duelId) {
+      return get(/databases/$(database)/documents/duels/$(duelId));
+    }
+
+    function isDuelParticipant(duelId) {
+      return signedIn() && request.auth.uid in duelDoc(duelId).data.participantIds;
+    }
+
+    function isOpenDuel(duelId) {
+      return duelDoc(duelId).data.status == 'open';
+    }
+
     match /users/{userId} {
-      // Any authenticated user can read profiles (for leaderboard/search)
-      allow read: if request.auth != null;
-      // Only the owner can write their own profile
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read: if signedIn();
+      allow write: if isOwner(userId);
 
-      // Badges sub-collection
       match /badges/{badgeId} {
-        allow read: if request.auth != null;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read: if signedIn();
+        allow write: if isOwner(userId);
       }
 
-      // FCM device tokens
       match /devices/{deviceId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
 
-      // XP & Level progress
       match /xp/{docId} {
-        allow read: if request.auth != null;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read: if signedIn();
+        allow write: if isOwner(userId);
       }
 
-      // Week stats for AI Coach
       match /weekStats/{weekId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
+      }
+
+      match /achievements/{achievementId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /stats/{statId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /friends/{friendId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /friendRequests/{requestId} {
+        allow read, update, delete: if isOwner(userId);
+        allow create: if signedIn() && request.resource.data.fromUserId == request.auth.uid;
+      }
+
+      match /boosters/{boosterId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /currency/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /avatars/{avatarId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /inventory/{itemId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /quests/{dateKey} {
+        allow read, write: if isOwner(userId);
+
+        match /daily/{questId} {
+          allow read, write: if isOwner(userId);
+        }
+      }
+
+      match /eventRewards/{rewardId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /events/{eventId} {
+        allow read, write: if isOwner(userId);
       }
     }
 
-    // ─── Duels ───────────────────────────────────────────────────────────
     match /duels/{duelId} {
-      // Any authenticated user who is a participant can read
-      allow read: if request.auth != null &&
-        (request.auth.uid in resource.data.participantIds ||
-         resource.data.status == 'open');
+      allow read: if signedIn() && (isDuelParticipant(duelId) || isOpenDuel(duelId));
+      allow create: if signedIn() && request.auth.uid == request.resource.data.creatorId;
+      allow update: if isDuelParticipant(duelId);
+      allow delete: if signedIn() && request.auth.uid == resource.data.creatorId;
 
-      // Creator can create a duel
-      allow create: if request.auth != null &&
-        request.auth.uid == request.resource.data.creatorId;
-
-      // Participants can update (accept, checkin status changes)
-      allow update: if request.auth != null &&
-        (request.auth.uid in resource.data.participantIds);
-
-      // Only creator can delete
-      allow delete: if request.auth != null &&
-        request.auth.uid == resource.data.creatorId;
-
-      // Participants sub-collection
       match /participants/{participantId} {
-        allow read: if request.auth != null &&
-          (request.auth.uid in get(/databases/$(database)/documents/duels/$(duelId)).data.participantIds ||
-           get(/databases/$(database)/documents/duels/$(duelId)).data.status == 'open');
-        allow write: if request.auth != null &&
-          (request.auth.uid == participantId ||
-           request.auth.uid in get(/databases/$(database)/documents/duels/$(duelId)).data.participantIds);
+        allow read: if signedIn() && (isDuelParticipant(duelId) || isOpenDuel(duelId));
+        allow write: if signedIn() &&
+          (request.auth.uid == participantId || isDuelParticipant(duelId));
       }
 
-      // Check-ins sub-collection
       match /checkins/{checkinId} {
-        allow read: if request.auth != null &&
-          request.auth.uid in get(/databases/$(database)/documents/duels/$(duelId)).data.participantIds;
-        allow create: if request.auth != null &&
-          request.auth.uid in get(/databases/$(database)/documents/duels/$(duelId)).data.participantIds &&
+        allow read: if isDuelParticipant(duelId);
+        allow create: if isDuelParticipant(duelId) &&
           request.auth.uid == request.resource.data.userId;
+        allow update, delete: if false;
+      }
+
+      match /messages/{messageId} {
+        allow read: if isDuelParticipant(duelId);
+        allow create: if isDuelParticipant(duelId) &&
+          request.auth.uid == request.resource.data.senderId;
         allow update, delete: if false;
       }
     }
 
-    // ─── Invites ─────────────────────────────────────────────────────────
     match /invites/{inviteCode} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null &&
-        request.auth.uid == request.resource.data.creatorId;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null &&
-        request.auth.uid == resource.data.creatorId;
+      allow read: if signedIn();
+      allow create: if signedIn() && request.auth.uid == request.resource.data.creatorId;
+      allow update: if signedIn();
+      allow delete: if signedIn() && request.auth.uid == resource.data.creatorId;
+    }
+
+    match /shop/{itemId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /events/{eventId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /seasons/{seasonId} {
+      allow read: if signedIn();
+      allow write: if false;
     }
   }
 }

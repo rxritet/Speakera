@@ -136,7 +136,7 @@ class UserAvatar {
     required this.backgroundColor,
     this.isUnlocked = false,
     this.unlockedAt,
-    this.source = AvatarSource.default,
+    this.source = AvatarSource.defaultAvatar,
   });
 
   final String id;
@@ -149,7 +149,7 @@ class UserAvatar {
 }
 
 enum AvatarSource {
-  default,
+  defaultAvatar,
   purchased,
   achievement,
   event,

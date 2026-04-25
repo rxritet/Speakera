@@ -64,6 +64,8 @@ enum XpEventType {
   groupTop3,     // +30 XP за топ-3 в группе
   firstDuel,     // +20 XP за первую дуэль
   trustedCheckin,// +5 XP бонус за автоматический чекин (Health)
+  achievement,   // +25 XP за достижение
+  quest,         // +15 XP за ежедневный квест
 }
 
 /// Заморозка стрика.

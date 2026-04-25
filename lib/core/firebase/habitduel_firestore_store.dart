@@ -6,6 +6,11 @@ import '../../domain/entities/gamification.dart';
 import '../../domain/entities/profile.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/entities/leaderboard_entry.dart';
+import '../../domain/entities/achievement.dart';
+import '../../domain/entities/user_stats.dart';
+import '../../domain/entities/social.dart';
+import '../../domain/entities/shop.dart';
+import '../../domain/entities/event.dart';
 
 /// Основной слой доступа к Firestore для HabitDuel.
 ///
@@ -932,6 +937,552 @@ class HabitDuelFirestoreStore {
       XpEventType.groupTop3 => 30,
       XpEventType.firstDuel => 20,
       XpEventType.trustedCheckin => 5,
+      XpEventType.achievement => 25,
+      XpEventType.quest => 15,
     };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  ACHIEVEMENTS
+  // ═══════════════════════════════════════════════════════════════════
+
+  Future<List<Achievement>> readAchievements(String userId) async {
+    if (!_isEnabled) return [];
+    try {
+      final snap = await _users.doc(userId).collection('achievements').get();
+      if (snap.docs.isEmpty) {
+        // Возвращаем дефолтный список достижений
+        return _getDefaultAchievements();
+      }
+      return snap.docs.map((doc) {
+        final data = doc.data();
+        return Achievement(
+          id: doc.id,
+          type: data['type'] as String? ?? doc.id,
+          title: data['title'] as String? ?? '',
+          description: data['description'] as String? ?? '',
+          icon: data['icon'] as String? ?? '🏆',
+          xpReward: (data['xpReward'] as num?)?.toInt() ?? 25,
+          isUnlocked: data['isUnlocked'] as bool? ?? false,
+          unlockedAt: _readDateTime(data['unlockedAt']),
+          progress: (data['progress'] as num?)?.toInt() ?? 0,
+          requiredValue: (data['requiredValue'] as num?)?.toInt() ?? 1,
+          category: AchievementCategory.values.firstWhere(
+            (c) => c.name == data['category'],
+            orElse: () => AchievementCategory.general,
+          ),
+          isSecret: data['isSecret'] as bool? ?? false,
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('readAchievements failed: $e');
+      return _getDefaultAchievements();
+    }
+  }
+
+  List<Achievement> _getDefaultAchievements() {
+    return [
+      Achievement(id: 'first_checkin', type: 'first_checkin', title: 'Первый шаг', description: 'Отметься впервые', icon: '🎯', xpReward: 10, isUnlocked: false, category: AchievementCategory.general),
+      Achievement(id: 'streak_7', type: 'streak_7', title: 'Неделя силы', description: '7 дней серии', icon: '🔥', xpReward: 50, isUnlocked: false, category: AchievementCategory.streak, requiredValue: 7),
+      Achievement(id: 'streak_21', type: 'streak_21', title: 'Марафонец', description: '21 день серии', icon: '💎', xpReward: 150, isUnlocked: false, category: AchievementCategory.streak, requiredValue: 21),
+      Achievement(id: 'streak_30', type: 'streak_30', title: 'Легенда', description: '30 дней серии', icon: '👑', xpReward: 300, isUnlocked: false, category: AchievementCategory.streak, requiredValue: 30),
+      Achievement(id: 'first_win', type: 'first_win', title: 'Победитель', description: 'Первая победа', icon: '🏆', xpReward: 50, isUnlocked: false, category: AchievementCategory.duel),
+      Achievement(id: 'duel_master', type: 'duel_master', title: 'Мастер дуэлей', description: '10 побед', icon: '⚔️', xpReward: 200, isUnlocked: false, category: AchievementCategory.duel, requiredValue: 10),
+      Achievement(id: 'social_butterfly', type: 'social_butterfly', title: 'Душа компании', description: '5 дуэлей с друзьями', icon: '🦋', xpReward: 100, isUnlocked: false, category: AchievementCategory.social, requiredValue: 5),
+      Achievement(id: 'early_bird', type: 'early_bird', title: 'Жаворонок', description: '7 чекинов до 8 утра', icon: '🌅', xpReward: 75, isUnlocked: false, category: AchievementCategory.special, requiredValue: 7),
+    ];
+  }
+
+  Future<void> claimAchievement({required String userId, required String achievementId}) async {
+    if (!_isEnabled) return;
+    try {
+      await _users.doc(userId).collection('achievements').doc(achievementId).set({
+        'isUnlocked': true,
+        'unlockedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('claimAchievement failed: $e');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  USER STATS
+  // ═══════════════════════════════════════════════════════════════════
+
+  Future<UserStats?> readUserStats(String userId) async {
+    if (!_isEnabled) return null;
+    try {
+      final doc = await _users.doc(userId).collection('stats').doc('overview').get();
+      if (!doc.exists) {
+        return UserStats(userId: userId);
+      }
+      final data = doc.data()!;
+      return UserStats(
+        userId: userId,
+        totalCheckins: (data['totalCheckins'] as num?)?.toInt() ?? 0,
+        totalDuels: (data['totalDuels'] as num?)?.toInt() ?? 0,
+        totalWins: (data['totalWins'] as num?)?.toInt() ?? 0,
+        totalLosses: (data['totalLosses'] as num?)?.toInt() ?? 0,
+        bestStreak: (data['bestStreak'] as num?)?.toInt() ?? 0,
+        currentStreak: (data['currentStreak'] as num?)?.toInt() ?? 0,
+        averageCheckinHour: (data['averageCheckinHour'] as num?)?.toDouble() ?? 9.0,
+        favoriteHabitCategory: data['favoriteHabitCategory'] as String?,
+      );
+    } catch (e) {
+      debugPrint('readUserStats failed: $e');
+      return UserStats(userId: userId);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  SOCIAL — FRIENDS & REQUESTS
+  // ═══════════════════════════════════════════════════════════════════
+
+  Future<List<Friend>?> readFriends(String userId) async {
+    if (!_isEnabled) return null;
+    try {
+      final snap = await _users.doc(userId).collection('friends').get();
+      return snap.docs.map((doc) {
+        final data = doc.data();
+        return Friend(
+          id: doc.id,
+          userId: data['userId'] as String? ?? doc.id,
+          username: data['username'] as String? ?? '',
+          avatarUrl: data['avatarUrl'] as String? ?? '',
+          level: (data['level'] as num?)?.toInt() ?? 1,
+          totalWins: (data['totalWins'] as num?)?.toInt() ?? 0,
+          isOnline: data['isOnline'] as bool? ?? false,
+          lastActiveAt: _readDateTime(data['lastActiveAt']),
+          friendSince: _readDateTime(data['friendSince']),
+          totalDuelsTogether: (data['totalDuelsTogether'] as num?)?.toInt() ?? 0,
+          winsAgainstMe: (data['winsAgainstMe'] as num?)?.toInt() ?? 0,
+          lossesAgainstMe: (data['lossesAgainstMe'] as num?)?.toInt() ?? 0,
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('readFriends failed: $e');
+      return null;
+    }
+  }
+
+  Future<List<FriendRequest>?> readFriendRequests(String userId) async {
+    if (!_isEnabled) return null;
+    try {
+      final snap = await _users.doc(userId).collection('friendRequests').get();
+      return snap.docs.map((doc) {
+        final data = doc.data();
+        return FriendRequest(
+          id: doc.id,
+          fromUserId: data['fromUserId'] as String? ?? '',
+          fromUsername: data['fromUsername'] as String? ?? '',
+          fromAvatar: data['fromAvatar'] as String? ?? '',
+          createdAt: _readDateTime(data['createdAt']) ?? DateTime.now(),
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('readFriendRequests failed: $e');
+      return null;
+    }
+  }
+
+  Future<List<OpponentRecommendation>?> readOpponentRecommendations(String userId) async {
+    if (!_isEnabled) return null;
+    // Заглушка — в реальной реализации будет умный подбор
+    return [
+      OpponentRecommendation(userId: 'rec1', username: 'Player1', level: 5, totalWins: 20, winRate: 55, commonHabits: ['Спорт']),
+      OpponentRecommendation(userId: 'rec2', username: 'Player2', level: 3, totalWins: 12, winRate: 45, commonHabits: ['Чтение']),
+    ];
+  }
+
+  Future<void> sendFriendRequest({required String fromUserId, required String toUserId}) async {
+    if (!_isEnabled) return;
+    try {
+      final fromUser = await _users.doc(fromUserId).get();
+      await _users.doc(toUserId).collection('friendRequests').add({
+        'fromUserId': fromUserId,
+        'fromUsername': fromUser.data()?['username'] ?? '',
+        'fromAvatar': fromUser.data()?['avatarUrl'] ?? '',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint('sendFriendRequest failed: $e');
+    }
+  }
+
+  Future<void> acceptFriendRequest({required String requestId}) async {
+    if (!_isEnabled) return;
+    try {
+      // Нужно найти документ запроса и добавить в друзья обеим сторонам
+      // Упрощённая реализация
+    } catch (e) {
+      debugPrint('acceptFriendRequest failed: $e');
+    }
+  }
+
+  Future<void> declineFriendRequest({required String requestId}) async {
+    if (!_isEnabled) return;
+    try {
+      // Удалить запрос
+    } catch (e) {
+      debugPrint('declineFriendRequest failed: $e');
+    }
+  }
+
+  Future<void> removeFriend({required String friendId}) async {
+    if (!_isEnabled) return;
+    try {
+      // Удалить из друзей
+    } catch (e) {
+      debugPrint('removeFriend failed: $e');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  CHAT MESSAGES
+  // ═══════════════════════════════════════════════════════════════════
+
+  Future<List<DuelMessage>?> readDuelMessages(String duelId) async {
+    if (!_isEnabled) return null;
+    try {
+      final snap = await _duels.doc(duelId).collection('messages')
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .get();
+      return snap.docs.map((doc) {
+        final data = doc.data();
+        return DuelMessage(
+          id: doc.id,
+          duelId: duelId,
+          senderId: data['senderId'] as String? ?? '',
+          senderName: data['senderName'] as String? ?? '',
+          messageType: DuelMessageType.values.firstWhere(
+            (t) => t.name == data['messageType'],
+            orElse: () => DuelMessageType.text,
+          ),
+          text: data['text'] as String?,
+          emoji: data['emoji'] as String?,
+          createdAt: _readDateTime(data['createdAt']),
+          isRead: data['isRead'] as bool? ?? false,
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('readDuelMessages failed: $e');
+      return null;
+    }
+  }
+
+  Future<void> sendDuelMessage({
+    required String duelId,
+    required String senderId,
+    required String senderName,
+    String? text,
+    String? emoji,
+  }) async {
+    if (!_isEnabled) return;
+    try {
+      await _duels.doc(duelId).collection('messages').add({
+        'senderId': senderId,
+        'senderName': senderName,
+        'messageType': emoji != null ? 'emoji' : 'text',
+        if (text != null) 'text': text,
+        if (emoji != null) 'emoji': emoji,
+        'createdAt': FieldValue.serverTimestamp(),
+        'isRead': false,
+      });
+    } catch (e) {
+      debugPrint('sendDuelMessage failed: $e');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  SHOP & CURRENCY
+  // ═══════════════════════════════════════════════════════════════════
+
+  Future<List<ShopItem>?> readShopItems() async {
+    if (!_isEnabled) return null;
+    try {
+      final snap = await _db.collection('shop').get();
+      return snap.docs.map((doc) {
+        final data = doc.data();
+        return ShopItem(
+          id: doc.id,
+          type: ShopItemType.values.firstWhere((t) => t.name == data['type'], orElse: () => ShopItemType.avatar),
+          name: data['name'] as String? ?? '',
+          description: data['description'] as String? ?? '',
+          icon: data['icon'] as String? ?? '',
+          price: (data['price'] as num?)?.toInt() ?? 0,
+          currency: ShopCurrency.values.firstWhere((c) => c.name == data['currency'], orElse: () => ShopCurrency.xp),
+          requiredLevel: (data['requiredLevel'] as num?)?.toInt() ?? 1,
+          category: ShopCategory.values.firstWhere((c) => c.name == data['category'], orElse: () => ShopCategory.all),
+          isLimited: data['isLimited'] as bool? ?? false,
+          limitedUntil: _readDateTime(data['limitedUntil']),
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('readShopItems failed: $e');
+      return null;
+    }
+  }
+
+  Future<List<Booster>?> readUserBoosters(String userId) async {
+    if (!_isEnabled) return null;
+    try {
+      final snap = await _users.doc(userId).collection('boosters').get();
+      return snap.docs.map((doc) {
+        final data = doc.data();
+        return Booster(
+          id: doc.id,
+          type: BoosterType.values.firstWhere((t) => t.name == data['type'], orElse: () => BoosterType.doubleXp),
+          name: data['name'] as String? ?? '',
+          description: data['description'] as String? ?? '',
+          icon: data['icon'] as String? ?? '',
+          durationMinutes: (data['durationMinutes'] as num?)?.toInt() ?? 30,
+          isActive: data['isActive'] as bool? ?? false,
+          expiresAt: _readDateTime(data['expiresAt']),
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('readUserBoosters failed: $e');
+      return null;
+    }
+  }
+
+  Future<UserCurrency?> readUserCurrency(String userId) async {
+    if (!_isEnabled) return null;
+    try {
+      final doc = await _users.doc(userId).collection('currency').doc('current').get();
+      if (!doc.exists) return const UserCurrency();
+      final data = doc.data()!;
+      return UserCurrency(
+        xp: (data['xp'] as num?)?.toInt() ?? 0,
+        gems: (data['gems'] as num?)?.toInt() ?? 0,
+        coins: (data['coins'] as num?)?.toInt() ?? 0,
+      );
+    } catch (e) {
+      debugPrint('readUserCurrency failed: $e');
+      return const UserCurrency();
+    }
+  }
+
+  Future<List<UserAvatar>?> readUserAvatars(String userId) async {
+    if (!_isEnabled) return null;
+    try {
+      final snap = await _users.doc(userId).collection('avatars').get();
+      return snap.docs.map((doc) {
+        final data = doc.data();
+        return UserAvatar(
+          id: doc.id,
+          name: data['name'] as String? ?? '',
+          icon: data['icon'] as String? ?? '',
+          backgroundColor: (data['backgroundColor'] as num?)?.toInt() ?? 0xFFEA580C,
+          isUnlocked: data['isUnlocked'] as bool? ?? false,
+          unlockedAt: _readDateTime(data['unlockedAt']),
+          source: AvatarSource.values.firstWhere((s) => s.name == data['source'], orElse: () => AvatarSource.defaultAvatar),
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('readUserAvatars failed: $e');
+      return null;
+    }
+  }
+
+  Future<void> purchaseItem({required String userId, required String itemId}) async {
+    if (!_isEnabled) return;
+    try {
+      await _users.doc(userId).collection('inventory').doc(itemId).set({
+        'itemId': itemId,
+        'purchasedAt': FieldValue.serverTimestamp(),
+        'isEquipped': false,
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('purchaseItem failed: $e');
+    }
+  }
+
+  Future<void> spendXp({required String userId, required int amount}) async {
+    if (!_isEnabled) return;
+    try {
+      await _users.doc(userId).collection('currency').doc('current').set({
+        'xp': FieldValue.increment(-amount),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('spendXp failed: $e');
+    }
+  }
+
+  Future<void> equipItem({required String userId, required String itemId}) async {
+    if (!_isEnabled) return;
+    try {
+      // Логика экипировки предмета
+    } catch (e) {
+      debugPrint('equipItem failed: $e');
+    }
+  }
+
+  Future<void> activateBooster({required String userId, required String boosterId}) async {
+    if (!_isEnabled) return;
+    try {
+      // Логика активации бустера
+    } catch (e) {
+      debugPrint('activateBooster failed: $e');
+    }
+  }
+
+  Future<void> equipAvatar({required String userId, required String avatarId}) async {
+    if (!_isEnabled) return;
+    try {
+      await _users.doc(userId).collection('avatars').doc(avatarId).update({
+        'isEquipped': true,
+      });
+      // Снять экипировку с других аватаров
+    } catch (e) {
+      debugPrint('equipAvatar failed: $e');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  EVENTS & QUESTS
+  // ═══════════════════════════════════════════════════════════════════
+
+  Future<List<GameEvent>?> readActiveEvents() async {
+    if (!_isEnabled) return null;
+    try {
+      final now = Timestamp.now();
+      final snap = await _db.collection('events')
+          .where('startDate', isLessThanOrEqualTo: now)
+          .where('endDate', isGreaterThanOrEqualTo: now)
+          .get();
+      return snap.docs.map((doc) {
+        final data = doc.data();
+        return GameEvent(
+          id: doc.id,
+          type: GameEventType.values.firstWhere((t) => t.name == data['type'], orElse: () => GameEventType.weekly),
+          title: data['title'] as String? ?? '',
+          description: data['description'] as String? ?? '',
+          icon: data['icon'] as String? ?? '🎯',
+          startDate: _readDateTime(data['startDate']) ?? DateTime.now(),
+          endDate: _readDateTime(data['endDate']) ?? DateTime.now(),
+          participantsCount: (data['participantsCount'] as num?)?.toInt() ?? 0,
+          isActive: true,
+          bannerColor: (data['bannerColor'] as num?)?.toInt() ?? 0xFFEA580C,
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('readActiveEvents failed: $e');
+      return null;
+    }
+  }
+
+  Future<List<DailyQuest>?> readDailyQuests(String userId) async {
+    if (!_isEnabled) return null;
+    try {
+      final today = DateTime.now();
+      final dateKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final snap = await _users.doc(userId).collection('quests').doc(dateKey).collection('daily').get();
+      if (snap.docs.isEmpty) {
+        return _getDefaultDailyQuests(userId);
+      }
+      return snap.docs.map((doc) {
+        final data = doc.data();
+        return DailyQuest(
+          id: doc.id,
+          type: DailyQuestType.values.firstWhere((t) => t.name == data['type'], orElse: () => DailyQuestType.checkin),
+          title: data['title'] as String? ?? '',
+          description: data['description'] as String? ?? '',
+          xpReward: (data['xpReward'] as num?)?.toInt() ?? 15,
+          currentProgress: (data['currentProgress'] as num?)?.toInt() ?? 0,
+          targetProgress: (data['targetProgress'] as num?)?.toInt() ?? 1,
+          isCompleted: data['isCompleted'] as bool? ?? false,
+          isClaimed: data['isClaimed'] as bool? ?? false,
+          resetAt: _readDateTime(data['resetAt']),
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('readDailyQuests failed: $e');
+      return _getDefaultDailyQuests(userId);
+    }
+  }
+
+  List<DailyQuest> _getDefaultDailyQuests(String userId) {
+    final now = DateTime.now();
+    final resetAt = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+    return [
+      DailyQuest(id: 'q1', type: DailyQuestType.checkin, title: 'Первый чекин', description: 'Отметься сегодня', xpReward: 15, currentProgress: 0, targetProgress: 1, isCompleted: false, resetAt: resetAt),
+      DailyQuest(id: 'q2', type: DailyQuestType.duelWin, title: 'Победа', description: 'Выиграй дуэль', xpReward: 30, currentProgress: 0, targetProgress: 1, isCompleted: false, resetAt: resetAt),
+      DailyQuest(id: 'q3', type: DailyQuestType.checkin3, title: 'Тройной удар', description: '3 чекина за день', xpReward: 50, currentProgress: 0, targetProgress: 3, isCompleted: false, resetAt: resetAt),
+    ];
+  }
+
+  Future<Season?> readCurrentSeason() async {
+    if (!_isEnabled) return null;
+    try {
+      final now = Timestamp.now();
+      final snap = await _db.collection('seasons')
+          .where('startDate', isLessThanOrEqualTo: now)
+          .where('endDate', isGreaterThanOrEqualTo: now)
+          .limit(1)
+          .get();
+      if (snap.docs.isEmpty) return null;
+      final doc = snap.docs.first;
+      final data = doc.data();
+      return Season(
+        id: doc.id,
+        number: (data['number'] as num?)?.toInt() ?? 1,
+        name: data['name'] as String? ?? '',
+        startDate: _readDateTime(data['startDate']) ?? DateTime.now(),
+        endDate: _readDateTime(data['endDate']) ?? DateTime.now(),
+        isActive: true,
+      );
+    } catch (e) {
+      debugPrint('readCurrentSeason failed: $e');
+      return null;
+    }
+  }
+
+  Future<void> claimQuestReward({required String userId, required String questId}) async {
+    if (!_isEnabled) return;
+    try {
+      final today = DateTime.now();
+      final dateKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      await _users.doc(userId).collection('quests').doc(dateKey).collection('daily').doc(questId).update({
+        'isClaimed': true,
+      });
+    } catch (e) {
+      debugPrint('claimQuestReward failed: $e');
+    }
+  }
+
+  Future<void> claimEventReward({required String userId, required String eventId, required String rewardId}) async {
+    if (!_isEnabled) return;
+    try {
+      await _users.doc(userId).collection('eventRewards').doc('${eventId}_$rewardId').set({
+        'eventId': eventId,
+        'rewardId': rewardId,
+        'claimedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint('claimEventReward failed: $e');
+    }
+  }
+
+  Future<void> joinEvent({required String userId, required String eventId}) async {
+    if (!_isEnabled) return;
+    try {
+      await _users.doc(userId).collection('events').doc(eventId).set({
+        'eventId': eventId,
+        'joinedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('joinEvent failed: $e');
+    }
+  }
+
+  Future<void> updateQuestProgress({required String userId, required DailyQuestType type, required int amount}) async {
+    if (!_isEnabled) return;
+    try {
+      // Найти квест по типу и обновить прогресс
+    } catch (e) {
+      debugPrint('updateQuestProgress failed: $e');
+    }
   }
 }

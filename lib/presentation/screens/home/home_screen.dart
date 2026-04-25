@@ -85,73 +85,211 @@ class _DuelCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isPending = duel.status == 'pending';
 
+    // Градиент в зависимости от статуса
+    final gradient = switch (duel.status) {
+      'active' => LinearGradient(
+          colors: [
+            theme.colorScheme.primary.withValues(alpha: 0.15),
+            theme.colorScheme.secondary.withValues(alpha: 0.08),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      'open' => LinearGradient(
+          colors: [
+            Colors.blue.withValues(alpha: 0.15),
+            Colors.cyan.withValues(alpha: 0.08),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      'completed' => LinearGradient(
+          colors: [
+            Colors.green.withValues(alpha: 0.15),
+            Colors.teal.withValues(alpha: 0.08),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      _ => null,
+    };
+
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => Navigator.pushNamed(context, '/duel', arguments: duel.id),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      duel.habitName,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  _StatusChip(status: duel.status),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (!isPending)
+        child: Container(
+          decoration: gradient != null ? BoxDecoration(gradient: gradient) : null,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Row(
                   children: [
-                    if (duel.status == 'open')
-                      _InfoChip(
-                        icon: Icons.people,
-                        label: '${duel.participants.length}/${duel.maxParticipants}',
-                      )
-                    else ...[
-                      _StreakIndicator(
-                        label: 'You',
-                        streak: duel.myStreak,
-                        color: theme.colorScheme.primary,
+                    Expanded(
+                      child: Text(
+                        duel.habitName,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      const SizedBox(width: 24),
-                      _StreakIndicator(
-                        label: 'Opponent',
-                        streak: duel.opponentStreak,
-                        color: theme.colorScheme.secondary,
-                      ),
-                    ],
-                    const Spacer(),
-                    Text(
-                      '${duel.durationDays} days',
-                      style: theme.textTheme.bodySmall,
+                    ),
+                    _StatusChip(status: duel.status),
+                  ],
+                ),
+                if (duel.description != null && duel.description!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    duel.description!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                if (!isPending) ...[
+                  if (duel.status == 'open')
+                    _InfoChip(
+                      icon: Icons.people,
+                      label: '${duel.participants.length}/${duel.maxParticipants}',
+                    )
+                  else ...[
+                    // Progress bars for streaks
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.local_fire_department,
+                                    size: 14,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Вы',
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    '${duel.myStreak}🔥',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: (duel.myStreak / duel.durationDays).clamp(0, 1),
+                                  minHeight: 6,
+                                  backgroundColor: theme.colorScheme.outline.withValues(alpha: 0.2),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.local_fire_department,
+                                    size: 14,
+                                    color: theme.colorScheme.secondary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Соперник',
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    '${duel.opponentStreak}🔥',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.secondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: (duel.opponentStreak / duel.durationDays).clamp(0, 1),
+                                  minHeight: 6,
+                                  backgroundColor: theme.colorScheme.outline.withValues(alpha: 0.2),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    theme.colorScheme.secondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                )
-              else if (duel.status == 'open')
-                Text(
-                  'Join this lobby to start!',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.timer_outlined,
+                        size: 14,
+                        color: theme.colorScheme.outline,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${duel.durationDays} дней',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.outline,
+                        ),
+                      ),
+                      if (duel.endsAt != null) ...[
+                        const Spacer(),
+                        Text(
+                          'До ${duel.endsAt!.day}.${duel.endsAt!.month}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                )
-              else
-                Text(
-                  'Waiting for opponent…',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontStyle: FontStyle.italic,
+                ]
+                else if (duel.status == 'open')
+                  Text(
+                    'Join this lobby to start!',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                else
+                  Text(
+                    'Waiting for opponent…',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -222,34 +360,6 @@ class _StatusChip extends StatelessWidget {
       side: BorderSide.none,
       padding: EdgeInsets.zero,
       visualDensity: VisualDensity.compact,
-    );
-  }
-}
-
-class _StreakIndicator extends StatelessWidget {
-  const _StreakIndicator({
-    required this.label,
-    required this.streak,
-    required this.color,
-  });
-  final String label;
-  final int streak;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          '$streak 🔥',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-      ],
     );
   }
 }

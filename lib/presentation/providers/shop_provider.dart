@@ -4,7 +4,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/firebase/habitduel_firestore_store.dart';
 import '../../domain/entities/shop.dart';
 import 'core_providers.dart';
-import 'gamification_provider.dart';
 
 // ─── State ─────────────────────────────────────────────────────────────────
 
@@ -40,11 +39,10 @@ class ShopError extends ShopState {
 // ─── Notifier ──────────────────────────────────────────────────────────────
 
 class ShopNotifier extends StateNotifier<ShopState> {
-  ShopNotifier(this._store, this._storage, this._xpNotifier) : super(const ShopLoading());
+  ShopNotifier(this._store, this._storage) : super(const ShopLoading());
 
   final HabitDuelFirestoreStore _store;
   final FlutterSecureStorage _storage;
-  final UserXpNotifier _xpNotifier;
 
   Future<void> load() async {
     state = const ShopLoading();
@@ -80,14 +78,14 @@ class ShopNotifier extends StateNotifier<ShopState> {
     final userId = await _storage.read(key: 'user_id');
     if (userId == null) return;
 
-    final state = this.state;
-    if (state is! ShopLoaded) return;
+    final currentState = state;
+    if (currentState is! ShopLoaded) return;
 
-    final item = state.items.firstWhere((i) => i.id == itemId);
+    final item = currentState.items.firstWhere((i) => i.id == itemId);
     
     // Проверка достаточности средств
-    if (item.currency == ShopCurrency.xp && state.currency.xp < item.price) {
-      state = ShopError('Недостаточно XP');
+    if (item.currency == ShopCurrency.xp && currentState.currency.xp < item.price) {
+      state = const ShopError('Недостаточно XP');
       return;
     }
 
@@ -146,7 +144,6 @@ final shopProvider = StateNotifierProvider<ShopNotifier, ShopState>((ref) {
   return ShopNotifier(
     ref.watch(firestoreStoreProvider),
     ref.watch(secureStorageProvider),
-    ref.read(userXpProvider.notifier),
   );
 });
 

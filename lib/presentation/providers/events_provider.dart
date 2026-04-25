@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../core/firebase/habitduel_firestore_store.dart';
 import '../../domain/entities/event.dart';
+import '../../domain/entities/gamification.dart';
 import 'core_providers.dart';
 import 'gamification_provider.dart';
 

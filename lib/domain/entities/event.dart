@@ -12,7 +12,7 @@ class GameEvent {
     this.participantsCount = 0,
     this.userProgress,
     this.isActive = false,
-    this.bannerColor = const Color(0xFFEA580C),
+    this.bannerColor = 0xFFEA580C,
   });
 
   final String id;

@@ -39,15 +39,14 @@ class Achievement {
 }
 
 enum AchievementCategory {
-  general('Общие', Icons.star),
-  streak('Серии', Icons.local_fire_department),
-  duel('Дуэли', Icons.swords),
-  social('Социальные', Icons.people),
-  special('События', Icons.celebration);
+  general('Общие'),
+  streak('Серии'),
+  duel('Дуэли'),
+  social('Социальные'),
+  special('События');
 
-  const AchievementCategory(this.label, this.icon);
+  const AchievementCategory(this.label);
   final String label;
-  final IconData icon;
 }
 
 /// Прогресс достижения для UI.

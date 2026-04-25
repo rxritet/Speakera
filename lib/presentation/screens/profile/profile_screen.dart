@@ -145,14 +145,50 @@ class _ProfileBody extends StatelessWidget {
           ),
 
         const SizedBox(height: 32),
-        FilledButton.tonalIcon(
-          onPressed: () => Navigator.pushNamed(context, '/xp-progress'),
-          icon: const Icon(Icons.star_rounded),
-          label: const Text('XP & Gamification'),
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            textStyle: theme.textTheme.titleMedium,
-          ),
+
+        // Quick actions
+        Row(
+          children: [
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.shopping_bag,
+                label: 'Магазин',
+                color: Colors.purple,
+                onTap: () => Navigator.pushNamed(context, '/shop'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.emoji_events,
+                label: 'Достижения',
+                color: Colors.amber,
+                onTap: () => Navigator.pushNamed(context, '/achievements'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.analytics,
+                label: 'Статистика',
+                color: Colors.blue,
+                onTap: () => Navigator.pushNamed(context, '/stats'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.star_rounded,
+                label: 'XP Прогресс',
+                color: Colors.green,
+                onTap: () => Navigator.pushNamed(context, '/xp-progress'),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -228,6 +264,56 @@ class _BadgeChip extends StatelessWidget {
     return Chip(
       avatar: Text(icon, style: const TextStyle(fontSize: 18)),
       label: Text(label),
+    );
+  }
+}
+
+class _QuickActionCard extends StatelessWidget {
+  const _QuickActionCard({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                color.withValues(alpha: 0.2),
+                color.withValues(alpha: 0.1),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 32),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -19,6 +19,9 @@ import 'presentation/screens/leaderboard/leaderboard_screen.dart';
 import 'presentation/screens/profile/profile_screen.dart';
 import 'presentation/screens/profile/xp_progress_screen.dart';
 import 'presentation/screens/settings/settings_screen.dart';
+import 'presentation/screens/achievements/achievements_screen.dart';
+import 'presentation/screens/stats/stats_screen.dart';
+import 'presentation/screens/shop/shop_screen.dart';
 
 /// Глобальный ключ навигатора — пробрасывается в FcmService для навигации из пушей.
 final _navigatorKey = GlobalKey<NavigatorState>();
@@ -104,6 +107,9 @@ class _HabitDuelAppState extends ConsumerState<HabitDuelApp> {
         '/profile': (_) => const ProfileScreen(),
         '/settings': (_) => const SettingsScreen(),
         '/xp-progress': (_) => const XpProgressScreen(),
+        '/achievements': (_) => const AchievementsScreen(),
+        '/stats': (_) => const StatsScreen(),
+        '/shop': (_) => const ShopScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/duel') {
@@ -124,7 +130,7 @@ class _HabitDuelAppState extends ConsumerState<HabitDuelApp> {
   }
 }
 
-/// Shell с нижней навигацией: Duels / Leaderboard / Profile.
+/// Shell с нижней навигацией: 5 основных вкладок.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -135,13 +141,21 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
 
-  final List<Widget?> _screens = [const HomeScreen(), null, null];
+  final List<Widget?> _screens = [
+    const HomeScreen(),
+    null, // Stats
+    null, // Achievements
+    null, // Leaderboard
+    null, // Profile
+  ];
 
   Widget _buildScreen(int index) {
     return switch (index) {
       0 => const HomeScreen(),
-      1 => const LeaderboardScreen(),
-      2 => const ProfileScreen(),
+      1 => const StatsScreen(),
+      2 => const AchievementsScreen(),
+      3 => const LeaderboardScreen(),
+      4 => const ProfileScreen(),
       _ => const SizedBox.shrink(),
     };
   }
@@ -173,11 +187,22 @@ class _MainShellState extends State<MainShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: _selectTab,
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.local_fire_department_outlined),
             selectedIcon: Icon(Icons.local_fire_department),
             label: 'Дуэли',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.analytics_outlined),
+            selectedIcon: Icon(Icons.analytics),
+            label: 'Статы',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.emoji_events_outlined),
+            selectedIcon: Icon(Icons.emoji_events),
+            label: 'Достижения',
           ),
           NavigationDestination(
             icon: Icon(Icons.leaderboard_outlined),
