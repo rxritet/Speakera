@@ -89,7 +89,7 @@ export default function () {
     'list duels status is 200': (r) => r.status === 200,
   });
 
-  const leaderboardResponse = http.get(`${baseUrl}/leaderboard`, {
+  const leaderboardResponse = http.get(`${baseUrl}/leaderboard/`, {
     headers: { Authorization: `Bearer ${token}` },
     tags: { name: 'leaderboard' },
   });
