@@ -1,181 +1,196 @@
 {
     "metrics": {
-        "http_req_receiving": {
-            "med": 0.06828400000000001,
-            "max": 1.166382,
-            "p(90)": 0.12310300000000002,
-            "p(95)": 0.16026044999999994,
-            "avg": 0.08033197222222213,
-            "min": 0.021562
+        "http_req_waiting": {
+            "avg": 38.788538444508255,
+            "min": 1.032956,
+            "med": 23.7696175,
+            "max": 275.493404,
+            "p(90)": 87.36144,
+            "p(95)": 144.66705875
         },
-        "vus": {
-            "value": 5,
-            "min": 5,
-            "max": 5
-        },
-        "iteration_duration": {
-            "p(95)": 1257.5849952,
-            "avg": 1233.9663991333332,
-            "min": 1212.074081,
-            "med": 1236.221784,
-            "max": 1260.357851,
-            "p(90)": 1252.2051398
+        "http_req_duration{name:duels_detail_creator}": {
+            "max": 86.485728,
+            "p(90)": 69.7193758,
+            "p(95)": 74.71531885,
+            "avg": 43.84279595522388,
+            "min": 3.079269,
+            "med": 52.8950795,
+            "thresholds": {
+                "p(95)<700": false
+            }
         },
         "http_req_failed": {
             "passes": 0,
-            "fails": 540,
+            "fails": 5226,
             "thresholds": {
-                "rate<0.01": false
+                "rate<0.02": false
             },
             "value": 0
         },
-        "http_req_duration{name:duels_accept}": {
-            "avg": 21.34844942222222,
-            "min": 14.414712,
-            "med": 21.176606,
-            "max": 26.060591,
-            "p(90)": 24.2502464,
-            "p(95)": 25.2193822,
+        "http_req_duration{name:auth_login_creator}": {
+            "max": 37.508761,
+            "p(90)": 25.5377481,
+            "p(95)": 28.739682199999994,
+            "avg": 14.414109052238823,
+            "min": 1.163216,
+            "med": 15.716334,
             "thresholds": {
-                "p(95)<700": false
+                "p(95)<400": false
             }
-        },
-        "http_req_duration{expected_response:true}": {
-            "p(90)": 47.0917607,
-            "p(95)": 51.55669475,
-            "avg": 19.297704638888884,
-            "min": 1.44017,
-            "med": 12.496109,
-            "max": 68.719568
-        },
-        "http_req_connecting": {
-            "p(90)": 0,
-            "p(95)": 0,
-            "avg": 0.0014267407407407408,
-            "min": 0,
-            "med": 0,
-            "max": 0.191934
-        },
-        "http_req_duration{name:duels_detail_creator}": {
-            "p(90)": 19.742587800000003,
-            "p(95)": 22.4031286,
-            "avg": 15.871455199999998,
-            "min": 13.068189,
-            "med": 14.86666,
-            "max": 23.352973,
-            "thresholds": {
-                "p(95)<700": false
-            }
-        },
-        "vus_max": {
-            "value": 5,
-            "min": 5,
-            "max": 5
         },
         "iterations": {
-            "count": 45,
-            "rate": 4.04893309114943
+            "count": 402,
+            "rate": 12.950006482610565
         },
-        "http_reqs": {
-            "count": 540,
-            "rate": 48.58719709379316
+        "http_req_duration{name:duels_checkin}": {
+            "min": 8.851437,
+            "med": 160.9533905,
+            "max": 275.704327,
+            "p(90)": 193.02261900000002,
+            "p(95)": 199.20283460000002,
+            "avg": 132.75655402487556,
+            "thresholds": {
+                "p(95)<700": false
+            }
         },
-        "data_sent": {
-            "count": 205965,
-            "rate": 18531.96675819094
+        "http_req_receiving": {
+            "avg": 0.07750340202831982,
+            "min": 0.016702,
+            "med": 0.066547,
+            "max": 1.285652,
+            "p(90)": 0.121638,
+            "p(95)": 0.15862175
         },
-        "data_received": {
-            "count": 466795,
-            "rate": 42000.48271740218
+        "vus_max": {
+            "value": 20,
+            "min": 20,
+            "max": 20
+        },
+        "http_req_duration": {
+            "p(90)": 87.4882785,
+            "p(95)": 144.77922525,
+            "avg": 39.01291856735558,
+            "min": 1.098371,
+            "med": 23.9075785,
+            "max": 275.704327,
+            "thresholds": {
+                "p(95)<800": false,
+                "p(99)<1500": false
+            }
         },
         "checks": {
-            "passes": 540,
+            "passes": 6432,
             "fails": 0,
             "value": 1
         },
-        "http_req_duration{name:duels_checkin_opponent}": {
-            "avg": 48.1007534,
-            "min": 41.876082,
-            "med": 47.253331,
-            "max": 58.85695,
-            "p(90)": 55.20250100000001,
-            "p(95)": 58.280523,
+        "iteration_duration": {
+            "avg": 1509.6813374900494,
+            "min": 1045.341704,
+            "med": 1580.7641545000001,
+            "max": 1868.921421,
+            "p(90)": 1778.5652754,
+            "p(95)": 1828.3449292
+        },
+        "http_req_duration{name:leaderboard}": {
+            "med": 36.8277165,
+            "max": 86.791288,
+            "p(90)": 65.7352036,
+            "p(95)": 81.717031,
+            "avg": 36.391825833333336,
+            "min": 4.318112,
             "thresholds": {
-                "p(95)<700": false
+                "p(95)<500": false
             }
         },
         "http_req_tls_handshaking": {
-            "p(90)": 0,
-            "p(95)": 0,
-            "avg": 0,
             "min": 0,
             "med": 0,
-            "max": 0
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0
         },
-        "http_req_duration{name:duels_checkin_creator}": {
-            "min": 43.376348,
-            "med": 50.790667,
-            "max": 68.719568,
-            "p(90)": 60.7878038,
-            "p(95)": 61.415217399999996,
-            "avg": 51.63583062222223,
-            "thresholds": {
-                "p(95)<700": false
-            }
+        "data_received": {
+            "count": 6543374,
+            "rate": 210787.89979638165
         },
-        "http_req_waiting": {
-            "min": 1.34665,
-            "med": 12.339444,
-            "max": 68.542912,
-            "p(90)": 47.017299400000006,
-            "p(95)": 51.404897999999996,
-            "avg": 19.20168436851852
+        "vus": {
+            "min": 2,
+            "max": 20,
+            "value": 2
+        },
+        "http_req_connecting": {
+            "avg": 0.01608345024875622,
+            "min": 0,
+            "med": 0,
+            "max": 38.711643,
+            "p(90)": 0,
+            "p(95)": 0
         },
         "http_req_sending": {
-            "p(90)": 0.027976600000000004,
-            "p(95)": 0.0332699,
-            "avg": 0.015688298148148164,
-            "min": 0.005496,
-            "med": 0.012111,
-            "max": 0.117473
+            "avg": 0.14687672081898226,
+            "min": 0.005261,
+            "med": 0.0120255,
+            "max": 40.480742,
+            "p(90)": 0.029788000000000002,
+            "p(95)": 0.03531425
         },
-        "http_req_duration{name:duels_create_directed}": {
-            "med": 29.278924,
-            "max": 40.682437,
-            "p(90)": 37.90081240000001,
-            "p(95)": 40.4971294,
-            "avg": 30.55777213333333,
-            "min": 26.644687,
-            "thresholds": {
-                "p(95)<700": false
-            }
+        "data_sent": {
+            "count": 1924704,
+            "rate": 62002.31163459324
         },
-        "http_req_duration{name:duels_detail_opponent}": {
-            "med": 14.167232,
-            "max": 24.763231,
-            "p(90)": 21.112845000000007,
-            "p(95)": 24.206726999999997,
-            "avg": 15.346143333333329,
-            "min": 10.72687,
-            "thresholds": {
-                "p(95)<700": false
-            }
+        "http_req_duration{expected_response:true}": {
+            "p(90)": 87.4882785,
+            "p(95)": 144.77922525,
+            "avg": 39.01291856735558,
+            "min": 1.098371,
+            "med": 23.9075785,
+            "max": 275.704327
         },
-        "http_req_duration": {
-            "p(90)": 47.0917607,
-            "p(95)": 51.55669475,
-            "avg": 19.297704638888884,
-            "min": 1.44017,
-            "med": 12.496109,
-            "max": 68.719568
+        "http_reqs": {
+            "rate": 168.35008427393734,
+            "count": 5226
         },
         "http_req_blocked": {
-            "avg": 0.022945574074074084,
-            "min": 0.001046,
-            "med": 0.0021115,
-            "max": 2.228421,
-            "p(90)": 0.0034703,
-            "p(95)": 0.004096199999999999
+            "avg": 0.022629936471488716,
+            "min": 0.000928,
+            "med": 0.002071,
+            "max": 39.36984,
+            "p(90)": 0.0034584999999999998,
+            "p(95)": 0.004234
+        },
+        "http_req_duration{name:auth_register_creator}": {
+            "max": 82.763127,
+            "p(90)": 31.167697200000003,
+            "p(95)": 35.14156489999999,
+            "avg": 17.10568475373136,
+            "min": 2.040549,
+            "med": 14.2383165,
+            "thresholds": {
+                "p(95)<400": false
+            }
+        },
+        "http_req_duration{name:duels_create_directed}": {
+            "p(90)": 117.5471182,
+            "p(95)": 125.2619668,
+            "avg": 76.14280972636816,
+            "min": 5.339637,
+            "med": 90.9869975,
+            "max": 144.330273,
+            "thresholds": {
+                "p(95)<700": false
+            }
+        },
+        "http_req_duration{name:duels_accept}": {
+            "p(95)": 84.31450155,
+            "avg": 49.89677872636817,
+            "min": 4.052607,
+            "med": 56.492182,
+            "max": 97.630885,
+            "p(90)": 80.64774910000001,
+            "thresholds": {
+                "p(95)<700": false
+            }
         }
     },
     "root_group": {
@@ -184,89 +199,117 @@
         "id": "d41d8cd98f00b204e9800998ecf8427e",
         "groups": {},
         "checks": {
-                "lifecycle creator register is 201": {
-                    "name": "lifecycle creator register is 201",
-                    "path": "::lifecycle creator register is 201",
-                    "id": "97f210e5959137b573b47f7e54786e02",
-                    "passes": 45,
-                    "fails": 0
-                },
-                "lifecycle opponent register is 201": {
-                    "name": "lifecycle opponent register is 201",
-                    "path": "::lifecycle opponent register is 201",
-                    "id": "906f3c054529d3c67c409576cf90f38f",
-                    "passes": 45,
-                    "fails": 0
-                },
-                "lifecycle creator login is 200": {
-                    "name": "lifecycle creator login is 200",
-                    "path": "::lifecycle creator login is 200",
-                    "id": "537608f1be5876af98c3a87fff61cd2f",
-                    "passes": 45,
-                    "fails": 0
-                },
-                "lifecycle opponent login is 200": {
+                "creator register status is 201": {
+                    "path": "::creator register status is 201",
+                    "id": "a2b503a571e10e8d0ee251c9402e57bb",
+                    "passes": 402,
                     "fails": 0,
-                    "name": "lifecycle opponent login is 200",
-                    "path": "::lifecycle opponent login is 200",
-                    "id": "a3c7ca0f3e503494abd66abcbaebe0ab",
-                    "passes": 45
+                    "name": "creator register status is 201"
                 },
-                "lifecycle duel create is 201": {
-                    "name": "lifecycle duel create is 201",
-                    "path": "::lifecycle duel create is 201",
-                    "id": "a9ba178b5a34096e0d1c8236e0cea3be",
-                    "passes": 45,
+                "creator register returns token": {
+                    "name": "creator register returns token",
+                    "path": "::creator register returns token",
+                    "id": "2408c3282d680115eb086972b54203c6",
+                    "passes": 402,
                     "fails": 0
                 },
-                "lifecycle duel accept is 200": {
-                    "passes": 45,
-                    "fails": 0,
-                    "name": "lifecycle duel accept is 200",
-                    "path": "::lifecycle duel accept is 200",
-                    "id": "849bf65b41cd615ad10896e349d06f90"
-                },
-                "lifecycle creator duel list is 200": {
-                    "name": "lifecycle creator duel list is 200",
-                    "path": "::lifecycle creator duel list is 200",
-                    "id": "06371caa50d3061b8c634fbddf0c6d94",
-                    "passes": 45,
+                "opponent register status is 201": {
+                    "name": "opponent register status is 201",
+                    "path": "::opponent register status is 201",
+                    "id": "c257c1e2ff3f9e384b8708c508c32d35",
+                    "passes": 402,
                     "fails": 0
                 },
-                "lifecycle opponent duel list is 200": {
-                    "name": "lifecycle opponent duel list is 200",
-                    "path": "::lifecycle opponent duel list is 200",
-                    "id": "d9802b2b1dcc4e1219c6d059d473303d",
-                    "passes": 45,
+                "opponent register returns token": {
+                    "id": "8579f8a54b81f5eee0e6a111b4fb2db2",
+                    "passes": 402,
+                    "fails": 0,
+                    "name": "opponent register returns token",
+                    "path": "::opponent register returns token"
+                },
+                "creator login status is 200": {
+                    "path": "::creator login status is 200",
+                    "id": "75096363f0b9066e2be150a502a54239",
+                    "passes": 402,
+                    "fails": 0,
+                    "name": "creator login status is 200"
+                },
+                "opponent login status is 200": {
+                    "path": "::opponent login status is 200",
+                    "id": "40cf578a59b596eb79e718a4779b3283",
+                    "passes": 402,
+                    "fails": 0,
+                    "name": "opponent login status is 200"
+                },
+                "users me status is 200": {
+                    "name": "users me status is 200",
+                    "path": "::users me status is 200",
+                    "id": "e593c2573ab7eea19df0cc3f86a07f3b",
+                    "passes": 402,
                     "fails": 0
                 },
-                "lifecycle creator checkin is 201": {
-                    "id": "e5cdd191e39e366a6131c2fb90da16b3",
-                    "passes": 45,
+                "create directed duel status is 201": {
+                    "path": "::create directed duel status is 201",
+                    "id": "4feab4cb1c2b2b6880efc130a0b8afca",
+                    "passes": 402,
                     "fails": 0,
-                    "name": "lifecycle creator checkin is 201",
-                    "path": "::lifecycle creator checkin is 201"
+                    "name": "create directed duel status is 201"
                 },
-                "lifecycle opponent checkin is 201": {
-                    "name": "lifecycle opponent checkin is 201",
-                    "path": "::lifecycle opponent checkin is 201",
-                    "id": "437ecd9a4b69a31009232a8cdc6b9ab2",
-                    "passes": 45,
+                "create directed duel returns id": {
+                    "name": "create directed duel returns id",
+                    "path": "::create directed duel returns id",
+                    "id": "0c798fef76dec9b578801dfc5979d355",
+                    "passes": 402,
                     "fails": 0
                 },
-                "lifecycle creator detail is 200": {
-                    "path": "::lifecycle creator detail is 200",
-                    "id": "65ef37d19f6f00d16f117d8a2f8ad556",
-                    "passes": 45,
-                    "fails": 0,
-                    "name": "lifecycle creator detail is 200"
+                "accept duel status is 200": {
+                    "name": "accept duel status is 200",
+                    "path": "::accept duel status is 200",
+                    "id": "625aaf35f055681bc89b01770a11500b",
+                    "passes": 402,
+                    "fails": 0
                 },
-                "lifecycle opponent detail is 200": {
-                    "path": "::lifecycle opponent detail is 200",
-                    "id": "7a476ff262e60dafbb2307bc2a3ef7c0",
-                    "passes": 45,
+                "creator duel list status is 200": {
+                    "id": "150fa6cf3e0ef8aeac7434aec50d4816",
+                    "passes": 402,
                     "fails": 0,
-                    "name": "lifecycle opponent detail is 200"
+                    "name": "creator duel list status is 200",
+                    "path": "::creator duel list status is 200"
+                },
+                "opponent duel list status is 200": {
+                    "name": "opponent duel list status is 200",
+                    "path": "::opponent duel list status is 200",
+                    "id": "1a1cb3f93542d1694d4538514522daa2",
+                    "passes": 402,
+                    "fails": 0
+                },
+                "creator checkin status is 201": {
+                    "name": "creator checkin status is 201",
+                    "path": "::creator checkin status is 201",
+                    "id": "34dd7803226e466fd2d51d3c57ae2cfc",
+                    "passes": 402,
+                    "fails": 0
+                },
+                "creator duel detail status is 200": {
+                    "id": "32f000413f0577191ebae87936d03cb0",
+                    "passes": 402,
+                    "fails": 0,
+                    "name": "creator duel detail status is 200",
+                    "path": "::creator duel detail status is 200"
+                },
+                "opponent duel detail status is 200": {
+                    "passes": 402,
+                    "fails": 0,
+                    "name": "opponent duel detail status is 200",
+                    "path": "::opponent duel detail status is 200",
+                    "id": "833c8e2f31aea4188286cea0febea84f"
+                },
+                "leaderboard status is 200": {
+                    "name": "leaderboard status is 200",
+                    "path": "::leaderboard status is 200",
+                    "id": "a7253dd2304ed8130678032692a333ae",
+                    "passes": 402,
+                    "fails": 0
                 }
             }
     }
