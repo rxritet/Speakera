@@ -1,7 +1,8 @@
 Param(
   [switch]$Observability,
   [switch]$Tools,
-  [switch]$LoadTest
+  [switch]$LoadTest,
+  [string]$LoadScript = 'api-load.js'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -62,6 +63,7 @@ if ($Tools) {
 
 if ($LoadTest) {
   Write-Host 'Running k6 load scenario...' -ForegroundColor Cyan
+  $env:K6_SCRIPT = $LoadScript
   Invoke-Compose (@('--profile', 'load', 'run', '--rm', 'k6'))
   Write-Host 'k6 summary: load-tests/results/api-summary.json' -ForegroundColor Green
 }

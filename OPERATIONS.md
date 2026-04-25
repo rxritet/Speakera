@@ -26,6 +26,12 @@ Windows helper:
 powershell -ExecutionPolicy Bypass -File .\scripts\dev-stack.ps1 -Observability -Tools
 ```
 
+Load test with a specific k6 scenario:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\dev-stack.ps1 -LoadTest -LoadScript api-lifecycle.js
+```
+
 ## URLs
 
 - API health: `http://localhost:8080/healthz`
