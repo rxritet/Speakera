@@ -1,0 +1,169 @@
+{
+    "metrics": {
+        "http_req_duration": {
+            "max": 103.212359,
+            "p(90)": 40.4333912,
+            "p(95)": 55.7221556,
+            "avg": 16.31632001769913,
+            "min": 1.097073,
+            "med": 7.906334,
+            "thresholds": {
+                "p(95)<800": false,
+                "p(99)<1500": false
+            }
+        },
+        "http_req_receiving": {
+            "min": 0.023555,
+            "med": 0.067332,
+            "max": 1.229186,
+            "p(90)": 0.1264876,
+            "p(95)": 0.16941799999999976,
+            "avg": 0.08032484849557528
+        },
+        "http_req_waiting": {
+            "med": 7.784335,
+            "max": 103.120788,
+            "p(90)": 40.3501,
+            "p(95)": 55.56745459999998,
+            "avg": 16.217991651327416,
+            "min": 0.976233
+        },
+        "vus": {
+            "max": 20,
+            "value": 5,
+            "min": 5
+        },
+        "iteration_duration": {
+            "med": 1056.118884,
+            "max": 1297.426977,
+            "p(90)": 1243.9864510000002,
+            "p(95)": 1264.5722042,
+            "avg": 1082.8868390796456,
+            "min": 1014.148697
+        },
+        "http_req_blocked": {
+            "med": 0.002147,
+            "max": 2.999895,
+            "p(90)": 0.0040086,
+            "p(95)": 0.004833799999999998,
+            "avg": 0.019560083893805317,
+            "min": 0.000962
+        },
+        "http_req_tls_handshaking": {
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0
+        },
+        "data_sent": {
+            "count": 1002650,
+            "rate": 32322.988939167255
+        },
+        "iterations": {
+            "count": 565,
+            "rate": 18.21422106480776
+        },
+        "http_req_sending": {
+            "max": 3.828213,
+            "p(90)": 0.0294388,
+            "p(95)": 0.037231799999999995,
+            "avg": 0.018003517876106226,
+            "min": 0.005548,
+            "med": 0.011466
+        },
+        "checks": {
+            "passes": 3390,
+            "fails": 0,
+            "value": 1
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 2825,
+            "thresholds": {
+                "rate<0.05": false
+            },
+            "value": 0
+        },
+        "http_reqs": {
+            "count": 2825,
+            "rate": 91.0711053240388
+        },
+        "http_req_duration{expected_response:true}": {
+            "med": 7.906334,
+            "max": 103.212359,
+            "p(90)": 40.4333912,
+            "p(95)": 55.7221556,
+            "avg": 16.31632001769913,
+            "min": 1.097073
+        },
+        "http_req_connecting": {
+            "min": 0,
+            "med": 0,
+            "max": 1.580152,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.003616003185840708
+        },
+        "data_received": {
+            "count": 5117310,
+            "rate": 164969.58512770158
+        },
+        "vus_max": {
+            "value": 20,
+            "min": 20,
+            "max": 20
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "register status is 201": {
+                    "id": "f57ddd483e45441e8c8271b44196eedd",
+                    "passes": 565,
+                    "fails": 0,
+                    "name": "register status is 201",
+                    "path": "::register status is 201"
+                },
+                "register returns token": {
+                    "path": "::register returns token",
+                    "id": "a6740cabacd27ff92691498d0d37e316",
+                    "passes": 565,
+                    "fails": 0,
+                    "name": "register returns token"
+                },
+                "me status is 200": {
+                    "passes": 565,
+                    "fails": 0,
+                    "name": "me status is 200",
+                    "path": "::me status is 200",
+                    "id": "b894aa1b61c12a8515bf01c77360b9f8"
+                },
+                "create duel status is 201": {
+                    "name": "create duel status is 201",
+                    "path": "::create duel status is 201",
+                    "id": "d58eeeab8c2c0f87990785935613b88c",
+                    "passes": 565,
+                    "fails": 0
+                },
+                "list duels status is 200": {
+                    "path": "::list duels status is 200",
+                    "id": "bb533b9d3a4c2f5626dfe795884bb71f",
+                    "passes": 565,
+                    "fails": 0,
+                    "name": "list duels status is 200"
+                },
+                "leaderboard is reachable": {
+                    "name": "leaderboard is reachable",
+                    "path": "::leaderboard is reachable",
+                    "id": "0d68f43e8b3bad552142ddd508be5cac",
+                    "passes": 565,
+                    "fails": 0
+                }
+            }
+    }
+}

@@ -66,7 +66,7 @@ export default function () {
   });
 
   const createDuelResponse = http.post(
-    `${baseUrl}/duels`,
+    `${baseUrl}/duels/`,
     JSON.stringify({
       habit_name: 'Load Test Habit',
       description: 'k6 smoke duel',
@@ -80,7 +80,7 @@ export default function () {
     'create duel status is 201': (r) => r.status === 201,
   });
 
-  const listResponse = http.get(`${baseUrl}/duels`, {
+  const listResponse = http.get(`${baseUrl}/duels/`, {
     headers: { Authorization: `Bearer ${token}` },
     tags: { name: 'duels_list' },
   });
