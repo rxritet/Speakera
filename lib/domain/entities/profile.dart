@@ -10,6 +10,7 @@ class UserProfile {
     this.bio,
     this.favoriteHabit,
     this.avatarEmoji = '🔥',
+    this.avatarUrl,
   });
 
   final String id;
@@ -21,6 +22,7 @@ class UserProfile {
   final String? bio;
   final String? favoriteHabit;
   final String avatarEmoji;
+  final String? avatarUrl;
 
   UserProfile copyWith({
     String? id,
@@ -32,6 +34,7 @@ class UserProfile {
     String? bio,
     String? favoriteHabit,
     String? avatarEmoji,
+    String? avatarUrl,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -43,12 +46,14 @@ class UserProfile {
       bio: bio ?? this.bio,
       favoriteHabit: favoriteHabit ?? this.favoriteHabit,
       avatarEmoji: avatarEmoji ?? this.avatarEmoji,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }
 }
 
 class ProfileBadge {
   const ProfileBadge({required this.badgeType, required this.earnedAt});
+
   final String badgeType;
   final DateTime earnedAt;
 }
