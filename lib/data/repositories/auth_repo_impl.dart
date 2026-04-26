@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/errors/failures.dart';
@@ -10,12 +12,6 @@ import '../../core/firebase/habitduel_firestore_store.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
-/// Firebase Auth — основной провайдер аутентификации.
-///
-/// Логика:
-/// 1. Регистрация/вход через [FirebaseAuth].
-/// 2. При успехе записываем userId (=Firebase UID) в SecureStorage.
-/// 3. Дублируем профиль в Firestore через [HabitDuelFirestoreStore].
 class AuthRepositoryImpl implements AuthRepository {
   const AuthRepositoryImpl(this._storage, this._store);
 
@@ -23,8 +19,6 @@ class AuthRepositoryImpl implements AuthRepository {
   final HabitDuelFirestoreStore _store;
 
   fb.FirebaseAuth get _auth => fb.FirebaseAuth.instance;
-
-  // ─── Register ────────────────────────────────────────────────────────
 
   @override
   Future<RegisterResult> register({
@@ -40,7 +34,6 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       final fbUser = credential.user!;
 
-      // Устанавливаем displayName сразу после создания
       await fbUser.updateDisplayName(username);
 
       final user = User(
@@ -60,8 +53,6 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  // ─── Login ───────────────────────────────────────────────────────────
-
   @override
   Future<LoginResult> login({
     required String email,
@@ -73,52 +64,61 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email,
         password: password,
       );
-      final fbUser = credential.user!;
-
-      // Пробуем прочитать профиль из Firestore
-      final profile = await _store.readProfile(fbUser.uid);
-      final username = profile?.username ?? fbUser.displayName ?? email.split('@').first;
-      final wins = profile?.wins ?? 0;
-      final losses = profile?.losses ?? 0;
-
-      await _persistLocally(fbUser.uid, username);
-
-      final user = User(
-        id: fbUser.uid,
-        username: username,
-        email: email,
-        wins: wins,
-        losses: losses,
-      );
-
-      // Если профиля в Firestore нет (например, был создан когда Firestore был недоступен), 
-      // то восстанавливаем его
-      if (profile == null) {
-        unawaited(_store.mirrorUserFromAuth(user));
-      }
-
-      return LoginResult(user: user, token: await fbUser.getIdToken() ?? '');
+      return _buildLoginResult(credential.user!);
     } on fb.FirebaseAuthException catch (e) {
       throw _mapFirebaseError(e);
     }
   }
 
-  // ─── Session management ──────────────────────────────────────────────
+  @override
+  Future<LoginResult> signInWithGoogle() async {
+    _assertFirebaseReady();
+    try {
+      late final fb.UserCredential credential;
+
+      if (kIsWeb) {
+        credential = await _auth.signInWithPopup(fb.GoogleAuthProvider());
+      } else {
+        final googleUser = await GoogleSignIn().signIn();
+        if (googleUser == null) {
+          throw const AuthFailure('Вход через Google отменен.');
+        }
+
+        final googleAuth = await googleUser.authentication;
+        final googleCredential = fb.GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        credential = await _auth.signInWithCredential(googleCredential);
+      }
+
+      final fbUser = credential.user;
+      if (fbUser == null) {
+        throw const AuthFailure('Не удалось получить пользователя Google.');
+      }
+
+      return _buildLoginResult(fbUser);
+    } on AuthFailure {
+      rethrow;
+    } on fb.FirebaseAuthException catch (e) {
+      throw _mapFirebaseError(e);
+    } catch (e) {
+      throw AuthFailure('Ошибка входа через Google: $e');
+    }
+  }
 
   @override
   Future<bool> hasToken() async {
-    // Приоритет: Firebase session
     final currentUser = _auth.currentUser;
     if (currentUser != null) {
-      // Синхронизируем SecureStorage если нужно
       final savedId = await _storage.read(key: kUserIdKey);
       if (savedId == null || savedId.isEmpty) {
-        final username = currentUser.displayName ?? currentUser.email?.split('@').first ?? '';
+        final username =
+            currentUser.displayName ?? currentUser.email?.split('@').first ?? '';
         await _persistLocally(currentUser.uid, username);
       }
       return true;
     }
-    // Fallback: старый JWT токен (для совместимости при первом запуске)
     final token = await _storage.read(key: kTokenKey);
     return token != null && token.isNotEmpty;
   }
@@ -131,9 +131,37 @@ class AuthRepositoryImpl implements AuthRepository {
     if (Firebase.apps.isNotEmpty) {
       await _auth.signOut();
     }
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {
+      // Ignore Google sign-out issues when the user used email/password auth.
+    }
   }
 
-  // ─── Helpers ─────────────────────────────────────────────────────────
+  Future<LoginResult> _buildLoginResult(fb.User fbUser) async {
+    final email = fbUser.email;
+    final profile = await _store.readProfile(fbUser.uid);
+    final username =
+        profile?.username ?? fbUser.displayName ?? email?.split('@').first ?? 'Player';
+    final wins = profile?.wins ?? 0;
+    final losses = profile?.losses ?? 0;
+
+    await _persistLocally(fbUser.uid, username);
+
+    final user = User(
+      id: fbUser.uid,
+      username: username,
+      email: email,
+      wins: wins,
+      losses: losses,
+    );
+
+    if (profile == null) {
+      unawaited(_store.mirrorUserFromAuth(user));
+    }
+
+    return LoginResult(user: user, token: await fbUser.getIdToken() ?? '');
+  }
 
   Future<void> _persistLocally(String uid, String username) async {
     await _storage.write(key: kUserIdKey, value: uid);
@@ -149,6 +177,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
   AuthFailure _mapFirebaseError(fb.FirebaseAuthException e) {
     final message = switch (e.code) {
+      'account-exists-with-different-credential' =>
+        'Этот Google-аккаунт уже связан с другим способом входа.',
       'email-already-in-use' => 'Этот email уже занят. Попробуйте войти.',
       'user-not-found' => 'Пользователь не найден.',
       'wrong-password' => 'Неверный пароль.',

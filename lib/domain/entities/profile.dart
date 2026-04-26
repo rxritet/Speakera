@@ -12,6 +12,7 @@ class UserProfile {
     this.favoriteHabit,
     this.avatarEmoji = '🔥',
     this.avatarUrl,
+    this.localAvatarBase64,
   });
 
   final String id;
@@ -24,6 +25,7 @@ class UserProfile {
   final String? favoriteHabit;
   final String avatarEmoji;
   final String? avatarUrl;
+  final String? localAvatarBase64;
 
   UserProfile copyWith({
     String? id,
@@ -36,6 +38,7 @@ class UserProfile {
     Object? favoriteHabit = _profileUnset,
     String? avatarEmoji,
     Object? avatarUrl = _profileUnset,
+    Object? localAvatarBase64 = _profileUnset,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -51,6 +54,9 @@ class UserProfile {
       avatarEmoji: avatarEmoji ?? this.avatarEmoji,
       avatarUrl:
           identical(avatarUrl, _profileUnset) ? this.avatarUrl : avatarUrl as String?,
+      localAvatarBase64: identical(localAvatarBase64, _profileUnset)
+          ? this.localAvatarBase64
+          : localAvatarBase64 as String?,
     );
   }
 }

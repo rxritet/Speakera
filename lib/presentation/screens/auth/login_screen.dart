@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/validators.dart';
@@ -33,12 +33,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
   }
 
+  Future<void> _signInWithGoogle() async {
+    await ref.read(authProvider.notifier).signInWithGoogle();
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isLoading = authState is AuthLoading;
 
-    // Показываем snackbar с ошибкой при неудачном входе
     ref.listen<AuthState>(authProvider, (prev, next) {
       if (next is Unauthenticated && next.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -60,7 +63,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ── Логотип ──
                   const Icon(
                     Icons.local_fire_department_rounded,
                     size: 72,
@@ -80,9 +82,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           color: Colors.grey,
                         ),
                   ),
-                  const SizedBox(height: 40),
-
-                  // ── Email ──
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: isLoading ? null : _signInWithGoogle,
+                      icon: const Icon(Icons.login),
+                      label: const Text('Continue with Google'),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'or',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
                   TextFormField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
@@ -95,8 +119,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Пароль ──
                   TextFormField(
                     controller: _passwordCtrl,
                     obscureText: _obscurePassword,
@@ -119,8 +141,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // ── Кнопка входа ──
                   SizedBox(
                     width: double.infinity,
                     height: 48,
@@ -139,8 +159,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Переход к регистрации ──
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

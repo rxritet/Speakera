@@ -7,8 +7,6 @@ import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import 'core_providers.dart';
 
-// ─── Состояние аутентификации ───────────────────────────────────────────
-
 sealed class AuthState {
   const AuthState();
 }
@@ -30,8 +28,6 @@ class Unauthenticated extends AuthState {
   const Unauthenticated([this.error]);
   final String? error;
 }
-
-// ─── Обработчик аутентификации ─────────────────────────────────────────
 
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._ref, this._repo) : super(const AuthInitial());
@@ -90,6 +86,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
         return;
       }
+      state = Unauthenticated(e.message);
+    } catch (e) {
+      state = Unauthenticated(e.toString());
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    state = const AuthLoading();
+    try {
+      final result = await _repo.signInWithGoogle();
+      state = Authenticated(result.user);
+    } on Failure catch (e) {
       state = Unauthenticated(e.message);
     } catch (e) {
       state = Unauthenticated(e.toString());

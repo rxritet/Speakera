@@ -36,6 +36,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
   static const _favoriteHabitKey = 'profile_favorite_habit';
   static const _avatarEmojiKey = 'profile_avatar_emoji';
   static const _avatarUrlKey = 'profile_avatar_url';
+  static const _localAvatarBase64Key = 'profile_local_avatar_base64';
 
   Future<void> load() async {
     state = const ProfileLoading();
@@ -68,6 +69,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     required String favoriteHabit,
     required String avatarEmoji,
     required String avatarUrl,
+    String? localAvatarBase64,
   }) async {
     final current = state;
     if (current is! ProfileLoaded) return;
@@ -77,8 +79,10 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
       username: username.trim().isEmpty ? current.profile.username : username.trim(),
       bio: bio.trim().isEmpty ? null : bio.trim(),
       favoriteHabit: favoriteHabit.trim().isEmpty ? null : favoriteHabit.trim(),
-      avatarEmoji: avatarEmoji.trim().isEmpty ? current.profile.avatarEmoji : avatarEmoji.trim(),
+      avatarEmoji:
+          avatarEmoji.trim().isEmpty ? current.profile.avatarEmoji : avatarEmoji.trim(),
       avatarUrl: avatarUrl.trim().isEmpty ? null : avatarUrl.trim(),
+      localAvatarBase64: localAvatarBase64 ?? current.profile.localAvatarBase64,
     );
 
     await storage.write(key: kUsernameKey, value: updatedProfile.username);
@@ -89,11 +93,17 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     );
     await storage.write(key: _avatarEmojiKey, value: updatedProfile.avatarEmoji);
     await storage.write(key: _avatarUrlKey, value: updatedProfile.avatarUrl ?? '');
+    await storage.write(
+      key: _localAvatarBase64Key,
+      value: updatedProfile.localAvatarBase64 ?? '',
+    );
 
     state = ProfileLoaded(updatedProfile);
 
     try {
-      await _ref.read(firestoreStoreProvider).upsertProfile(updatedProfile);
+      await _ref.read(firestoreStoreProvider).upsertProfile(
+            updatedProfile.copyWith(localAvatarBase64: null),
+          );
     } catch (_) {
       // Local edits remain available even if mirror sync is unavailable.
     }
@@ -111,6 +121,9 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
       avatarUrl:
           _readOptionalOverride(await storage.read(key: _avatarUrlKey)) ??
               profile.avatarUrl,
+      localAvatarBase64:
+          _readOptionalOverride(await storage.read(key: _localAvatarBase64Key)) ??
+              profile.localAvatarBase64,
     );
   }
 
@@ -120,6 +133,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
   }
 }
 
-final profileProvider = StateNotifierProvider<ProfileNotifier, ProfileState>((ref) {
+final profileProvider =
+    StateNotifierProvider<ProfileNotifier, ProfileState>((ref) {
   return ProfileNotifier(ref);
 });

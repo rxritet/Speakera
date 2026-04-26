@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/validators.dart';
@@ -38,12 +38,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         );
   }
 
+  Future<void> _signInWithGoogle() async {
+    await ref.read(authProvider.notifier).signInWithGoogle();
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isLoading = authState is AuthLoading;
 
-    // Показываем snackbar с ошибкой
     ref.listen<AuthState>(authProvider, (prev, next) {
       if (next is Unauthenticated && next.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -65,7 +68,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ── Логотип ──
                   const Icon(
                     Icons.local_fire_department_rounded,
                     size: 72,
@@ -85,9 +87,31 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           color: Colors.grey,
                         ),
                   ),
-                  const SizedBox(height: 40),
-
-                  // ── Username ──
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: isLoading ? null : _signInWithGoogle,
+                      icon: const Icon(Icons.login),
+                      label: const Text('Continue with Google'),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'or',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
                   TextFormField(
                     controller: _usernameCtrl,
                     textInputAction: TextInputAction.next,
@@ -99,8 +123,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Email ──
                   TextFormField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
@@ -113,8 +135,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Пароль ──
                   TextFormField(
                     controller: _passwordCtrl,
                     obscureText: _obscurePassword,
@@ -136,8 +156,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Confirm password ──
                   TextFormField(
                     controller: _confirmCtrl,
                     obscureText: true,
@@ -156,8 +174,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // ── Register button ──
                   SizedBox(
                     width: double.infinity,
                     height: 48,
@@ -176,8 +192,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Переход к входу ──
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
