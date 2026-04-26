@@ -2,6 +2,7 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 
 import {
+  BASE_URL,
   RUN_ID,
   acceptDuel,
   assertStatus,
@@ -367,6 +368,10 @@ export function browseApi(data) {
   }
 
   sleep(Math.random() * 1.5 + 0.25);
+}
+
+export default function (data) {
+  duelLifecycle(data);
 }
 
 function totalDuration() {
