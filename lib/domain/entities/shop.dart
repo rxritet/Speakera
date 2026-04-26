@@ -1,4 +1,3 @@
-/// Магазин и кастомизация.
 class ShopItem {
   const ShopItem({
     required this.id,
@@ -32,8 +31,6 @@ class ShopItem {
 
   bool get isAvailable =>
       !isLimited || (limitedUntil != null && limitedUntil!.isAfter(DateTime.now()));
-
-  bool get canAfford => currency == ShopCurrency.xp;
 
   ShopItem copyWith({
     String? id,
@@ -79,12 +76,13 @@ enum ShopItemType {
 }
 
 enum ShopCurrency {
-  xp('XP'),
-  gems('Гемы'),
-  coins('Монеты');
+  xp('XP', '⚡'),
+  gems('Гемы', '💎'),
+  tenge('Тенге', '₸');
 
-  const ShopCurrency(this.label);
+  const ShopCurrency(this.label, this.symbol);
   final String label;
+  final String symbol;
 }
 
 enum ShopCategory {
@@ -98,7 +96,6 @@ enum ShopCategory {
   final String label;
 }
 
-/// Бустеры и временные улучшения.
 class Booster {
   const Booster({
     required this.id,
@@ -124,10 +121,7 @@ class Booster {
 
   int get remainingMinutes {
     if (expiresAt == null) return 0;
-    return expiresAt!
-        .difference(DateTime.now())
-        .inMinutes
-        .clamp(0, durationMinutes);
+    return expiresAt!.difference(DateTime.now()).inMinutes.clamp(0, durationMinutes);
   }
 
   Booster copyWith({
@@ -165,28 +159,26 @@ enum BoosterType {
   final String icon;
 }
 
-/// Пользовательская валюта.
 class UserCurrency {
   const UserCurrency({
     this.xp = 0,
     this.gems = 0,
-    this.coins = 0,
+    this.tenge = 0,
   });
 
   final int xp;
   final int gems;
-  final int coins;
+  final int tenge;
 
-  UserCurrency copyWith({int? xp, int? gems, int? coins}) {
+  UserCurrency copyWith({int? xp, int? gems, int? tenge}) {
     return UserCurrency(
       xp: xp ?? this.xp,
       gems: gems ?? this.gems,
-      coins: coins ?? this.coins,
+      tenge: tenge ?? this.tenge,
     );
   }
 }
 
-/// Аватар пользователя.
 class UserAvatar {
   const UserAvatar({
     required this.id,

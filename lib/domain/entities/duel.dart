@@ -1,4 +1,3 @@
-/// Доменная сущность дуэли.
 class Duel {
   const Duel({
     required this.id,
@@ -23,7 +22,7 @@ class Duel {
     this.participants = const [],
     this.checkins = const [],
     this.entryFee = 0,
-    this.currency = DuelCurrency.coins,
+    this.currency = DuelCurrency.tenge,
   });
 
   final String id;
@@ -123,9 +122,7 @@ enum DuelType {
 }
 
 enum DuelCurrency {
-  coins('Монеты', '🪙'),
-  rubles('Рубли', '₽'),
-  dollars('Доллары', '\$');
+  tenge('Тенге', '₸');
 
   const DuelCurrency(this.label, this.symbol);
   final String label;

@@ -390,7 +390,7 @@ class HabitDuelFirestoreStore {
     String? healthMetric,
     double? healthTargetValue,
     int entryFee = 0,
-    DuelCurrency currency = DuelCurrency.coins,
+    DuelCurrency currency = DuelCurrency.tenge,
   }) async {
     if (!_isEnabled) throw Exception('Firestore is not enabled');
 
@@ -406,6 +406,11 @@ class HabitDuelFirestoreStore {
       } else {
         throw Exception('User "$opponentUsername" not found. They must login first.');
       }
+    }
+
+    if (entryFee > 0) {
+      await _ensureEnoughTenge(userId: creatorId, amount: entryFee);
+      await _changeUserTenge(userId: creatorId, delta: -entryFee);
     }
 
     final duel = Duel(
@@ -458,6 +463,17 @@ class HabitDuelFirestoreStore {
     if (!_isEnabled) return;
 
     final duelRef = _duels.doc(duelId);
+    final duelDoc = await duelRef.get();
+    if (!duelDoc.exists) {
+      throw Exception('Дуэль не найдена');
+    }
+
+    final duelData = duelDoc.data()!;
+    final entryFee = (duelData['entryFee'] as num?)?.toInt() ?? 0;
+    if (entryFee > 0) {
+      await _ensureEnoughTenge(userId: userId, amount: entryFee);
+    }
+
     final batch = _db.batch();
     final now = DateTime.now().toUtc();
 
@@ -479,6 +495,14 @@ class HabitDuelFirestoreStore {
       },
       SetOptions(merge: true),
     );
+
+    if (entryFee > 0) {
+      batch.set(
+        _users.doc(userId).collection('currency').doc('current'),
+        {'tenge': FieldValue.increment(-entryFee)},
+        SetOptions(merge: true),
+      );
+    }
 
     await batch.commit();
   }
@@ -553,6 +577,11 @@ class HabitDuelFirestoreStore {
       throw Exception('Лобби заполнено');
     }
 
+    final entryFee = (duelData['entryFee'] as num?)?.toInt() ?? 0;
+    if (entryFee > 0) {
+      await _ensureEnoughTenge(userId: userId, amount: entryFee);
+    }
+
     final batch = _db.batch();
     batch.update(_duels.doc(duelId), {
       'participantIds': FieldValue.arrayUnion([userId]),
@@ -568,6 +597,13 @@ class HabitDuelFirestoreStore {
       },
       SetOptions(merge: true),
     );
+    if (entryFee > 0) {
+      batch.set(
+        _users.doc(userId).collection('currency').doc('current'),
+        {'tenge': FieldValue.increment(-entryFee)},
+        SetOptions(merge: true),
+      );
+    }
     await batch.commit();
 
     return readDuel(duelId);
@@ -600,6 +636,11 @@ class HabitDuelFirestoreStore {
       throw Exception('Лобби заполнено');
     }
 
+    final entryFee = (duelData['entryFee'] as num?)?.toInt() ?? 0;
+    if (entryFee > 0) {
+      await _ensureEnoughTenge(userId: userId, amount: entryFee);
+    }
+
     final batch = _db.batch();
     batch.update(duelRef, {
       'participantIds': FieldValue.arrayUnion([userId]),
@@ -615,6 +656,13 @@ class HabitDuelFirestoreStore {
       },
       SetOptions(merge: true),
     );
+    if (entryFee > 0) {
+      batch.set(
+        _users.doc(userId).collection('currency').doc('current'),
+        {'tenge': FieldValue.increment(-entryFee)},
+        SetOptions(merge: true),
+      );
+    }
     await batch.commit();
   }
 
@@ -927,7 +975,7 @@ class HabitDuelFirestoreStore {
       entryFee: (data['entryFee'] as num?)?.toInt() ?? 0,
       currency: DuelCurrency.values.firstWhere(
         (value) => value.name == data['currency'],
-        orElse: () => DuelCurrency.coins,
+        orElse: () => DuelCurrency.tenge,
       ),
       myStreak: (data['myStreak'] as num?)?.toInt() ?? 0,
       opponentStreak: (data['opponentStreak'] as num?)?.toInt() ?? 0,
@@ -1291,12 +1339,56 @@ class HabitDuelFirestoreStore {
       return UserCurrency(
         xp: (data['xp'] as num?)?.toInt() ?? 0,
         gems: (data['gems'] as num?)?.toInt() ?? 0,
-        coins: (data['coins'] as num?)?.toInt() ?? 0,
+        tenge: (data['tenge'] as num?)?.toInt() ?? (data['coins'] as num?)?.toInt() ?? 0,
       );
     } catch (e) {
       debugPrint('readUserCurrency failed: $e');
       return const UserCurrency();
     }
+  }
+
+  Future<void> topUpTenge({
+    required String userId,
+    required int amount,
+  }) async {
+    if (!_isEnabled || amount <= 0) return;
+    await _changeUserTenge(userId: userId, delta: amount);
+  }
+
+  Future<void> spendTenge({
+    required String userId,
+    required int amount,
+  }) async {
+    if (!_isEnabled || amount <= 0) return;
+    await _ensureEnoughTenge(userId: userId, amount: amount);
+    await _changeUserTenge(userId: userId, delta: -amount);
+  }
+
+  Future<void> _ensureEnoughTenge({
+    required String userId,
+    required int amount,
+  }) async {
+    if (amount <= 0) return;
+    final balance = await _readUserTenge(userId);
+    if (balance < amount) {
+      throw Exception('Недостаточно средств на балансе');
+    }
+  }
+
+  Future<int> _readUserTenge(String userId) async {
+    final currency = await readUserCurrency(userId);
+    return currency?.tenge ?? 0;
+  }
+
+  Future<void> _changeUserTenge({
+    required String userId,
+    required int delta,
+  }) async {
+    if (!_isEnabled || delta == 0) return;
+    await _users.doc(userId).collection('currency').doc('current').set(
+      {'tenge': FieldValue.increment(delta)},
+      SetOptions(merge: true),
+    );
   }
 
   Future<List<UserAvatar>?> readUserAvatars(String userId) async {

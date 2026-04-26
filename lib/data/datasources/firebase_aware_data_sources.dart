@@ -89,7 +89,7 @@ class FirebaseAwareDuelDataSource {
     String? healthMetric,
     double? healthTargetValue,
     int entryFee = 0,
-    DuelCurrency currency = DuelCurrency.coins,
+    DuelCurrency currency = DuelCurrency.tenge,
   }) async {
     final userId = await _storage.read(key: kUserIdKey);
     final username = await _storage.read(key: kUsernameKey);

@@ -27,7 +27,7 @@ class _CreateDuelScreenState extends ConsumerState<CreateDuelScreen>
   double _healthTarget = 8000;
   bool _hasEntryFee = false;
   int _entryFee = 100;
-  DuelCurrency _currency = DuelCurrency.coins;
+  DuelCurrency _currency = DuelCurrency.tenge;
 
   static const _durations = [7, 14, 21, 30];
   static const _entryFeeOptions = [100, 250, 500, 1000];

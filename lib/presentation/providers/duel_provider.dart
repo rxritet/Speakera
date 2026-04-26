@@ -239,7 +239,7 @@ class CreateDuelNotifier extends StateNotifier<CreateDuelState> {
     String? healthMetric,
     double? healthTargetValue,
     int entryFee = 0,
-    DuelCurrency currency = DuelCurrency.coins,
+    DuelCurrency currency = DuelCurrency.tenge,
   }) async {
     state = const CreateDuelLoading();
     try {

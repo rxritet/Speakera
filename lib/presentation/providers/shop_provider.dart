@@ -27,9 +27,6 @@ class ShopLoaded extends ShopState {
   final List<Booster> boosters;
   final UserCurrency currency;
   final List<UserAvatar> avatars;
-
-  List<ShopItem> get purchasedItems => items.where((i) => i.isPurchased).toList();
-  List<ShopItem> get availableItems => items.where((i) => !i.isPurchased && i.isAvailable).toList();
 }
 
 class ShopError extends ShopState {
@@ -48,37 +45,31 @@ class ShopNotifier extends StateNotifier<ShopState> {
   static const _activeBoosterIdsKey = 'demo_shop_active_boosters';
   static const _equippedAvatarIdKey = 'demo_shop_equipped_avatar';
   static const _currencyKey = 'demo_shop_currency';
+  static const _userIdKey = 'user_id';
 
   Future<void> load() async {
     state = const ShopLoading();
     try {
-      final userId = await _storage.read(key: 'user_id');
+      final userId = await _storage.read(key: _userIdKey);
 
       final remoteItems = userId == null ? null : await _store.readShopItems();
-      final remoteBoosters =
-          userId == null ? null : await _store.readUserBoosters(userId);
-      final remoteCurrency =
-          userId == null ? null : await _store.readUserCurrency(userId);
-      final remoteAvatars =
-          userId == null ? null : await _store.readUserAvatars(userId);
-
-      final items = await _applyItemState(
-        remoteItems?.isNotEmpty == true ? remoteItems! : _demoItems,
-      );
-      final boosters = await _applyBoosterState(
-        remoteBoosters?.isNotEmpty == true ? remoteBoosters! : _demoBoosters,
-      );
-      final avatars = await _applyAvatarState(
-        remoteAvatars?.isNotEmpty == true ? remoteAvatars! : _demoAvatars,
-      );
+      final remoteBoosters = userId == null ? null : await _store.readUserBoosters(userId);
+      final remoteCurrency = userId == null ? null : await _store.readUserCurrency(userId);
+      final remoteAvatars = userId == null ? null : await _store.readUserAvatars(userId);
 
       state = ShopLoaded(
-        items: items,
-        boosters: boosters,
+        items: await _applyItemState(
+          remoteItems?.isNotEmpty == true ? remoteItems! : _demoItems,
+        ),
+        boosters: await _applyBoosterState(
+          remoteBoosters?.isNotEmpty == true ? remoteBoosters! : _demoBoosters,
+        ),
         currency: await _readCurrency(remoteCurrency),
-        avatars: avatars,
+        avatars: await _applyAvatarState(
+          remoteAvatars?.isNotEmpty == true ? remoteAvatars! : _demoAvatars,
+        ),
       );
-    } catch (e) {
+    } catch (_) {
       state = ShopLoaded(
         items: await _applyItemState(_demoItems),
         boosters: await _applyBoosterState(_demoBoosters),
@@ -88,34 +79,59 @@ class ShopNotifier extends StateNotifier<ShopState> {
     }
   }
 
+  Future<void> topUpBalance({required int amount}) async {
+    final currentState = state;
+    if (currentState is! ShopLoaded || amount <= 0) return;
+
+    final userId = await _storage.read(key: _userIdKey);
+    final newCurrency = currentState.currency.copyWith(
+      tenge: currentState.currency.tenge + amount,
+    );
+
+    await _writeCurrency(newCurrency);
+    if (userId != null && userId.isNotEmpty) {
+      await _store.topUpTenge(userId: userId, amount: amount);
+    }
+
+    state = ShopLoaded(
+      items: currentState.items,
+      boosters: currentState.boosters,
+      currency: newCurrency,
+      avatars: currentState.avatars,
+    );
+  }
+
   Future<void> purchaseItem(String itemId) async {
     final currentState = state;
     if (currentState is! ShopLoaded) return;
 
-    final item = currentState.items.firstWhere((i) => i.id == itemId);
+    final item = currentState.items.firstWhere((candidate) => candidate.id == itemId);
     if (item.isPurchased) return;
 
-    if (item.currency == ShopCurrency.xp && currentState.currency.xp < item.price) {
-      state = const ShopError('Недостаточно XP для покупки');
+    final balanceError = _validateBalance(currentState.currency, item);
+    if (balanceError != null) {
+      state = ShopError(balanceError);
       state = currentState;
       return;
     }
 
+    final userId = await _storage.read(key: _userIdKey);
     final purchasedIds = await _readIdSet(_purchasedItemsKey)..add(itemId);
-    final newCurrency = currentState.currency.copyWith(
-      xp: item.currency == ShopCurrency.xp
-          ? currentState.currency.xp - item.price
-          : currentState.currency.xp,
-    );
+    final newCurrency = _spendCurrency(currentState.currency, item);
 
     await _writeIdSet(_purchasedItemsKey, purchasedIds);
     await _writeCurrency(newCurrency);
 
+    if (userId != null && userId.isNotEmpty) {
+      await _syncRemotePurchase(userId: userId, item: item);
+    }
+
     state = ShopLoaded(
       items: currentState.items
-          .map((candidate) => candidate.id == itemId
-              ? candidate.copyWith(isPurchased: true)
-              : candidate)
+          .map((candidate) {
+            if (candidate.id != itemId) return candidate;
+            return candidate.copyWith(isPurchased: true);
+          })
           .toList(growable: false),
       boosters: currentState.boosters,
       currency: newCurrency,
@@ -130,9 +146,7 @@ class ShopNotifier extends StateNotifier<ShopState> {
     await _storage.write(key: _equippedItemKey, value: itemId);
     state = ShopLoaded(
       items: currentState.items
-          .map((item) => item.copyWith(
-                isEquipped: item.id == itemId,
-              ))
+          .map((item) => item.copyWith(isEquipped: item.id == itemId))
           .toList(growable: false),
       boosters: currentState.boosters,
       currency: currentState.currency,
@@ -149,17 +163,13 @@ class ShopNotifier extends StateNotifier<ShopState> {
 
     state = ShopLoaded(
       items: currentState.items
-          .map((item) => item.id == boosterId
-              ? item.copyWith(isEquipped: true)
-              : item)
+          .map((item) => item.id == boosterId ? item.copyWith(isEquipped: true) : item)
           .toList(growable: false),
       boosters: currentState.boosters.map((booster) {
         if (booster.id != boosterId) return booster;
         return booster.copyWith(
           isActive: true,
-          expiresAt: DateTime.now().add(
-            Duration(minutes: booster.durationMinutes),
-          ),
+          expiresAt: DateTime.now().add(Duration(minutes: booster.durationMinutes)),
         );
       }).toList(growable: false),
       currency: currentState.currency,
@@ -177,11 +187,43 @@ class ShopNotifier extends StateNotifier<ShopState> {
       boosters: currentState.boosters,
       currency: currentState.currency,
       avatars: currentState.avatars
-          .map((avatar) => avatar.copyWith(
-                isEquipped: avatar.id == avatarId,
-              ))
+          .map((avatar) => avatar.copyWith(isEquipped: avatar.id == avatarId))
           .toList(growable: false),
     );
+  }
+
+  String? _validateBalance(UserCurrency currency, ShopItem item) {
+    return switch (item.currency) {
+      ShopCurrency.xp when currency.xp < item.price => 'Недостаточно XP для покупки',
+      ShopCurrency.gems when currency.gems < item.price => 'Недостаточно гемов для покупки',
+      ShopCurrency.tenge when currency.tenge < item.price => 'Недостаточно тенге на балансе',
+      _ => null,
+    };
+  }
+
+  UserCurrency _spendCurrency(UserCurrency currency, ShopItem item) {
+    return switch (item.currency) {
+      ShopCurrency.xp => currency.copyWith(xp: currency.xp - item.price),
+      ShopCurrency.gems => currency.copyWith(gems: currency.gems - item.price),
+      ShopCurrency.tenge => currency.copyWith(tenge: currency.tenge - item.price),
+    };
+  }
+
+  Future<void> _syncRemotePurchase({
+    required String userId,
+    required ShopItem item,
+  }) async {
+    await _store.purchaseItem(userId: userId, itemId: item.id);
+    switch (item.currency) {
+      case ShopCurrency.xp:
+        await _store.spendXp(userId: userId, amount: item.price);
+        break;
+      case ShopCurrency.gems:
+        break;
+      case ShopCurrency.tenge:
+        await _store.spendTenge(userId: userId, amount: item.price);
+        break;
+    }
   }
 
   Future<List<ShopItem>> _applyItemState(List<ShopItem> items) async {
@@ -212,17 +254,15 @@ class ShopNotifier extends StateNotifier<ShopState> {
 
   Future<List<UserAvatar>> _applyAvatarState(List<UserAvatar> avatars) async {
     final equippedAvatarId = await _storage.read(key: _equippedAvatarIdKey);
-    return avatars.map((avatar) {
-      return avatar.copyWith(
-        isEquipped: avatar.id == equippedAvatarId,
-      );
-    }).toList(growable: false);
+    return avatars
+        .map((avatar) => avatar.copyWith(isEquipped: avatar.id == equippedAvatarId))
+        .toList(growable: false);
   }
 
   Future<UserCurrency> _readCurrency(UserCurrency? remote) async {
     final raw = await _storage.read(key: _currencyKey);
     if (raw == null || raw.isEmpty) {
-      final base = remote ?? const UserCurrency(xp: 1350, gems: 45, coins: 900);
+      final base = remote ?? const UserCurrency(xp: 1350, gems: 45, tenge: 15000);
       await _writeCurrency(base);
       return base;
     }
@@ -231,7 +271,7 @@ class ShopNotifier extends StateNotifier<ShopState> {
     return UserCurrency(
       xp: data['xp'] as int? ?? remote?.xp ?? 0,
       gems: data['gems'] as int? ?? remote?.gems ?? 0,
-      coins: data['coins'] as int? ?? remote?.coins ?? 0,
+      tenge: data['tenge'] as int? ?? data['coins'] as int? ?? remote?.tenge ?? 0,
     );
   }
 
@@ -241,7 +281,7 @@ class ShopNotifier extends StateNotifier<ShopState> {
       value: jsonEncode({
         'xp': currency.xp,
         'gems': currency.gems,
-        'coins': currency.coins,
+        'tenge': currency.tenge,
       }),
     );
   }
@@ -268,24 +308,27 @@ class ShopNotifier extends StateNotifier<ShopState> {
           description: 'Яркий аватар для тех, кто любит побеждать красиво.',
           icon: '🦊',
           price: 180,
+          currency: ShopCurrency.tenge,
           category: ShopCategory.avatars,
         ),
         const ShopItem(
           id: 'theme_sunrise',
           type: ShopItemType.theme,
           name: 'Sunrise Arena',
-          description: 'Теплая тема с акцентами рассвета и турнирным настроением.',
+          description: 'Тёплая тема с атмосферой арены на рассвете.',
           icon: '🌅',
           price: 320,
+          currency: ShopCurrency.tenge,
           category: ShopCategory.themes,
         ),
         const ShopItem(
           id: 'theme_cybermint',
           type: ShopItemType.theme,
           name: 'Cyber Mint',
-          description: 'Свежая неоновая тема для вечерних сессий.',
+          description: 'Свежая неоновая тема для вечерних дуэлей.',
           icon: '💠',
           price: 420,
+          currency: ShopCurrency.tenge,
           category: ShopCategory.themes,
         ),
         const ShopItem(
@@ -295,24 +338,27 @@ class ShopNotifier extends StateNotifier<ShopState> {
           description: 'Удваивает награду за активность на 30 минут.',
           icon: '⚡',
           price: 150,
+          currency: ShopCurrency.xp,
           category: ShopCategory.boosters,
         ),
         const ShopItem(
           id: 'booster_freeze',
           type: ShopItemType.booster,
           name: 'Streak Shield',
-          description: 'Спасает серию от одного пропуска.',
+          description: 'Сохраняет серию при одном пропуске.',
           icon: '🧊',
           price: 240,
+          currency: ShopCurrency.xp,
           category: ShopCategory.boosters,
         ),
         ShopItem(
           id: 'effect_confetti',
           type: ShopItemType.effect,
           name: 'Victory Confetti',
-          description: 'Конфетти после победы в дуэли.',
+          description: 'Конфетти после победы в денежной дуэли.',
           icon: '🎉',
           price: 260,
+          currency: ShopCurrency.tenge,
           category: ShopCategory.effects,
           isLimited: true,
           limitedUntil: DateTime.now().add(const Duration(days: 14)),
@@ -321,9 +367,10 @@ class ShopNotifier extends StateNotifier<ShopState> {
           id: 'effect_fire_trail',
           type: ShopItemType.effect,
           name: 'Fire Trail',
-          description: 'След из огня для чемпионских серий.',
+          description: 'Огненный след для чемпионских серий.',
           icon: '🔥',
           price: 300,
+          currency: ShopCurrency.tenge,
           category: ShopCategory.effects,
         ),
       ];
@@ -397,5 +444,5 @@ final filteredShopItemsProvider = Provider<List<ShopItem>>((ref) {
       ShopCategory.effects => item.type == ShopItemType.effect,
       ShopCategory.all => true,
     };
-  }).toList();
+  }).toList(growable: false);
 });

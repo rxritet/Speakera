@@ -17,7 +17,7 @@ class CreateDuelUseCase {
     String? healthMetric,
     double? healthTargetValue,
     int entryFee = 0,
-    DuelCurrency currency = DuelCurrency.coins,
+    DuelCurrency currency = DuelCurrency.tenge,
   }) {
     return _repo.createDuel(
       habitName: habitName,

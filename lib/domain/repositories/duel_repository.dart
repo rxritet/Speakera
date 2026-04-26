@@ -15,7 +15,7 @@ abstract class DuelRepository {
     String? healthMetric,
     double? healthTargetValue,
     int entryFee = 0,
-    DuelCurrency currency = DuelCurrency.coins,
+    DuelCurrency currency = DuelCurrency.tenge,
   });
 
   /// Принять ожидающую дуэль.

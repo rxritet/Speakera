@@ -19,7 +19,7 @@ class DuelRepositoryImpl implements DuelRepository {
     String? healthMetric,
     double? healthTargetValue,
     int entryFee = 0,
-    DuelCurrency currency = DuelCurrency.coins,
+    DuelCurrency currency = DuelCurrency.tenge,
   }) async {
     return _remoteDS.createDuel(
       habitName: habitName,
