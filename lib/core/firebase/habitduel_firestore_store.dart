@@ -238,12 +238,12 @@ class HabitDuelFirestoreStore {
     final duelDoc = await _duels.doc(duelId).get();
     if (!duelDoc.exists) return null;
 
-    final participantSnap = await duelDoc.reference.collection('participants').get();
+    final participantDocs = await _readParticipantsIfAllowed(duelDoc.reference);
     final checkins = await _readCheckinsIfAllowed(duelDoc.reference);
 
     return _duelFromDocument(
       duelDoc,
-      participants: participantSnap.docs,
+      participants: participantDocs,
       checkins: checkins,
     );
   }
@@ -253,10 +253,24 @@ class HabitDuelFirestoreStore {
     if (!_isEnabled) return const Stream.empty();
     return _duels.doc(duelId).snapshots().asyncMap((snap) async {
       if (!snap.exists) return null;
-      final participantSnap = await snap.reference.collection('participants').get();
+      final participantDocs = await _readParticipantsIfAllowed(snap.reference);
       final checkins = await _readCheckinsIfAllowed(snap.reference);
-      return _duelFromDocument(snap, participants: participantSnap.docs, checkins: checkins);
+      return _duelFromDocument(snap, participants: participantDocs, checkins: checkins);
     });
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _readParticipantsIfAllowed(
+    DocumentReference<Map<String, dynamic>> duelRef,
+  ) async {
+    try {
+      final snapshot = await duelRef.collection('participants').get();
+      return snapshot.docs;
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied') {
+        return const [];
+      }
+      rethrow;
+    }
   }
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _readCheckinsIfAllowed(
@@ -275,6 +289,7 @@ class HabitDuelFirestoreStore {
       rethrow;
     }
   }
+
 
   /// Stream для real-time обновлений списка дуэлей пользователя.
   Stream<List<Duel>> watchMyDuels(String userId) {
