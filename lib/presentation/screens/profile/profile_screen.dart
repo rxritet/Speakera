@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../domain/entities/profile.dart';
 import '../../providers/profile_provider.dart';
@@ -284,7 +288,9 @@ class _ProfileEditSheetState extends ConsumerState<_ProfileEditSheet> {
   late final TextEditingController _habitController;
   late final TextEditingController _emojiController;
   late final TextEditingController _avatarUrlController;
+  String? _localAvatarBase64;
   bool _saving = false;
+  bool _pickingImage = false;
 
   @override
   void initState() {
@@ -296,6 +302,7 @@ class _ProfileEditSheetState extends ConsumerState<_ProfileEditSheet> {
     _emojiController = TextEditingController(text: widget.profile.avatarEmoji);
     _avatarUrlController =
         TextEditingController(text: widget.profile.avatarUrl ?? '');
+    _localAvatarBase64 = widget.profile.localAvatarBase64;
   }
 
   @override
@@ -308,6 +315,28 @@ class _ProfileEditSheetState extends ConsumerState<_ProfileEditSheet> {
     super.dispose();
   }
 
+  Future<void> _pickAvatarFromDevice() async {
+    if (_pickingImage) return;
+    setState(() => _pickingImage = true);
+    try {
+      final file = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+      if (file == null) return;
+
+      final bytes = await file.readAsBytes();
+      if (!mounted) return;
+      setState(() => _localAvatarBase64 = base64Encode(bytes));
+    } finally {
+      if (mounted) {
+        setState(() => _pickingImage = false);
+      }
+    }
+  }
+
   Future<void> _save() async {
     if (_saving) return;
     setState(() => _saving = true);
@@ -318,6 +347,7 @@ class _ProfileEditSheetState extends ConsumerState<_ProfileEditSheet> {
             favoriteHabit: _habitController.text,
             avatarEmoji: _emojiController.text,
             avatarUrl: _avatarUrlController.text,
+            localAvatarBase64: _localAvatarBase64,
           );
       if (mounted) {
         Navigator.of(context).pop();
@@ -331,6 +361,8 @@ class _ProfileEditSheetState extends ConsumerState<_ProfileEditSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final localAvatarBytes = _decodeAvatarBytes(_localAvatarBase64);
+
     return Padding(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -350,6 +382,53 @@ class _ProfileEditSheetState extends ConsumerState<_ProfileEditSheet> {
                   ),
             ),
             const SizedBox(height: 16),
+            Center(
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 42,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    child: ClipOval(
+                      child: localAvatarBytes != null
+                          ? Image.memory(
+                              localAvatarBytes,
+                              width: 84,
+                              height: 84,
+                              fit: BoxFit.cover,
+                            )
+                          : Text(
+                              _emojiController.text.trim().isEmpty
+                                  ? '🔥'
+                                  : _emojiController.text.trim(),
+                              style: const TextStyle(fontSize: 34),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _pickingImage ? null : _pickAvatarFromDevice,
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: Text(
+                          _pickingImage ? 'Загрузка...' : 'Фото с устройства',
+                        ),
+                      ),
+                      if (_localAvatarBase64 != null)
+                        TextButton.icon(
+                          onPressed: () => setState(() => _localAvatarBase64 = null),
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Убрать фото'),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             TextField(
               controller: _usernameController,
               decoration: const InputDecoration(
@@ -362,7 +441,7 @@ class _ProfileEditSheetState extends ConsumerState<_ProfileEditSheet> {
               controller: _avatarUrlController,
               keyboardType: TextInputType.url,
               decoration: const InputDecoration(
-                labelText: 'Ссылка на настоящий аватар',
+                labelText: 'Ссылка на внешний аватар',
                 hintText: 'https://...',
                 prefixIcon: Icon(Icons.image_outlined),
               ),
@@ -420,6 +499,7 @@ class _ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localAvatarBytes = _decodeAvatarBytes(profile.localAvatarBase64);
     final avatarUrl = profile.avatarUrl?.trim();
     final hasAvatarUrl = avatarUrl != null && avatarUrl.isNotEmpty;
 
@@ -427,23 +507,30 @@ class _ProfileAvatar extends StatelessWidget {
       radius: 42,
       backgroundColor: theme.colorScheme.surface,
       child: ClipOval(
-        child: hasAvatarUrl
-            ? Image.network(
-                avatarUrl,
+        child: localAvatarBytes != null
+            ? Image.memory(
+                localAvatarBytes,
                 width: 84,
                 height: 84,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Center(
-                  child: Text(
+              )
+            : hasAvatarUrl
+                ? Image.network(
+                    avatarUrl,
+                    width: 84,
+                    height: 84,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => Center(
+                      child: Text(
+                        profile.avatarEmoji,
+                        style: const TextStyle(fontSize: 34),
+                      ),
+                    ),
+                  )
+                : Text(
                     profile.avatarEmoji,
                     style: const TextStyle(fontSize: 34),
                   ),
-                ),
-              )
-            : Text(
-                profile.avatarEmoji,
-                style: const TextStyle(fontSize: 34),
-              ),
       ),
     );
   }
@@ -615,5 +702,16 @@ class _QuickActionCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+Uint8List? _decodeAvatarBytes(String? encoded) {
+  if (encoded == null || encoded.trim().isEmpty) {
+    return null;
+  }
+  try {
+    return base64Decode(encoded);
+  } catch (_) {
+    return null;
   }
 }

@@ -250,9 +250,9 @@ class _Podium extends StatelessWidget {
       children: arranged.map((entry) {
         final isChampion = entry.rank == 1;
         final height = switch (entry.rank) {
-          1 => 190.0,
-          2 => 156.0,
-          _ => 140.0,
+          1 => 236.0,
+          2 => 212.0,
+          _ => 204.0,
         };
         return Expanded(
           child: Padding(
@@ -293,7 +293,7 @@ class _PodiumCard extends StatelessWidget {
 
     return Container(
       height: height,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         gradient: LinearGradient(
@@ -303,6 +303,13 @@ class _PodiumCard extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -325,6 +332,7 @@ class _PodiumCard extends StatelessWidget {
             entry.username,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
             ),
@@ -332,11 +340,13 @@ class _PodiumCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '${entry.wins} побед',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.outline,
             ),
           ),
-          const SizedBox(height: 10),
+          const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -345,6 +355,8 @@ class _PodiumCard extends StatelessWidget {
             ),
             child: Text(
               '$winRate% винрейт',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
