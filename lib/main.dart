@@ -1,14 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/notifications/fcm_service.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/theme/app_theme.dart';
+import 'firebase_options.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/theme_provider.dart';
+import 'presentation/screens/achievements/achievements_screen.dart';
 import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/auth/register_screen.dart';
 import 'presentation/screens/duel/create_duel_screen.dart';
@@ -19,11 +20,9 @@ import 'presentation/screens/leaderboard/leaderboard_screen.dart';
 import 'presentation/screens/profile/profile_screen.dart';
 import 'presentation/screens/profile/xp_progress_screen.dart';
 import 'presentation/screens/settings/settings_screen.dart';
-import 'presentation/screens/achievements/achievements_screen.dart';
-import 'presentation/screens/stats/stats_screen.dart';
 import 'presentation/screens/shop/shop_screen.dart';
+import 'presentation/screens/stats/stats_screen.dart';
 
-/// Глобальный ключ навигатора — пробрасывается в FcmService для навигации из пушей.
 final _navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
@@ -41,7 +40,6 @@ void main() async {
       );
     }
 
-    // FCM инициализируем только на мобильных
     if (!kIsWeb) {
       FcmService.setNavigatorKey(_navigatorKey);
       await FcmService.instance.init();
@@ -63,7 +61,6 @@ class HabitDuelApp extends ConsumerStatefulWidget {
 }
 
 class _HabitDuelAppState extends ConsumerState<HabitDuelApp> {
-
   @override
   void initState() {
     super.initState();
@@ -76,15 +73,9 @@ class _HabitDuelAppState extends ConsumerState<HabitDuelApp> {
     ref.listen<AuthState>(authProvider, (prev, next) {
       if (next is Authenticated) {
         Future.microtask(() => FcmService.instance.syncCurrentUserToken());
-        _navigatorKey.currentState?.pushNamedAndRemoveUntil(
-          '/home',
-          (_) => false,
-        );
+        _navigatorKey.currentState?.pushNamedAndRemoveUntil('/home', (_) => false);
       } else if (next is Unauthenticated) {
-        _navigatorKey.currentState?.pushNamedAndRemoveUntil(
-          '/login',
-          (_) => false,
-        );
+        _navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (_) => false);
       }
     });
 
@@ -130,7 +121,6 @@ class _HabitDuelAppState extends ConsumerState<HabitDuelApp> {
   }
 }
 
-/// Shell с нижней навигацией: 5 основных вкладок.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -143,10 +133,10 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget?> _screens = [
     const HomeScreen(),
-    null, // Stats
-    null, // Achievements
-    null, // Leaderboard
-    null, // Profile
+    null,
+    null,
+    null,
+    null,
   ];
 
   Widget _buildScreen(int index) {
@@ -187,7 +177,7 @@ class _MainShellState extends State<MainShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: _selectTab,
-        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.local_fire_department_outlined),
@@ -202,7 +192,7 @@ class _MainShellState extends State<MainShell> {
           NavigationDestination(
             icon: Icon(Icons.emoji_events_outlined),
             selectedIcon: Icon(Icons.emoji_events),
-            label: 'Достижения',
+            label: 'Трофеи',
           ),
           NavigationDestination(
             icon: Icon(Icons.leaderboard_outlined),

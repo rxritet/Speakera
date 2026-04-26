@@ -62,11 +62,13 @@ class ShopNotifier extends StateNotifier<ShopState> {
       final remoteAvatars =
           userId == null ? null : await _store.readUserAvatars(userId);
 
-      final items = _applyItemState(remoteItems?.isNotEmpty == true ? remoteItems! : _demoItems);
-      final boosters = _applyBoosterState(
+      final items = await _applyItemState(
+        remoteItems?.isNotEmpty == true ? remoteItems! : _demoItems,
+      );
+      final boosters = await _applyBoosterState(
         remoteBoosters?.isNotEmpty == true ? remoteBoosters! : _demoBoosters,
       );
-      final avatars = _applyAvatarState(
+      final avatars = await _applyAvatarState(
         remoteAvatars?.isNotEmpty == true ? remoteAvatars! : _demoAvatars,
       );
 
@@ -78,10 +80,10 @@ class ShopNotifier extends StateNotifier<ShopState> {
       );
     } catch (e) {
       state = ShopLoaded(
-        items: _applyItemState(_demoItems),
-        boosters: _applyBoosterState(_demoBoosters),
+        items: await _applyItemState(_demoItems),
+        boosters: await _applyBoosterState(_demoBoosters),
         currency: await _readCurrency(null),
-        avatars: _applyAvatarState(_demoAvatars),
+        avatars: await _applyAvatarState(_demoAvatars),
       );
     }
   }
@@ -146,7 +148,11 @@ class ShopNotifier extends StateNotifier<ShopState> {
     await _writeIdSet(_activeBoosterIdsKey, activeIds);
 
     state = ShopLoaded(
-      items: currentState.items,
+      items: currentState.items
+          .map((item) => item.id == boosterId
+              ? item.copyWith(isEquipped: true)
+              : item)
+          .toList(growable: false),
       boosters: currentState.boosters.map((booster) {
         if (booster.id != boosterId) return booster;
         return booster.copyWith(
@@ -181,11 +187,12 @@ class ShopNotifier extends StateNotifier<ShopState> {
   Future<List<ShopItem>> _applyItemState(List<ShopItem> items) async {
     final purchasedIds = await _readIdSet(_purchasedItemsKey);
     final equippedItemId = await _storage.read(key: _equippedItemKey);
+    final activeBoosterIds = await _readIdSet(_activeBoosterIdsKey);
     return items.map((item) {
       final isPurchased = item.isPurchased || purchasedIds.contains(item.id);
       return item.copyWith(
         isPurchased: isPurchased,
-        isEquipped: equippedItemId == item.id,
+        isEquipped: equippedItemId == item.id || activeBoosterIds.contains(item.id),
       );
     }).toList(growable: false);
   }

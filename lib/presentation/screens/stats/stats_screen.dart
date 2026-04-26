@@ -417,7 +417,7 @@ class _OpponentsTab extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: stats.headToHeadStats.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final h2h = stats.headToHeadStats.values.elementAt(index);
         return _HeadToHeadCard(stats: h2h);

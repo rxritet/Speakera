@@ -41,7 +41,6 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: false,
-          tabAlignment: TabAlignment.fill,
           tabs: AchievementCategory.values
               .map((cat) => Tab(text: cat.label))
               .toList(),
@@ -196,7 +195,7 @@ class _AchievementsBody extends StatelessWidget {
               return ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: filtered.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   return AchievementCard(
                     achievement: filtered[index],

@@ -21,6 +21,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(profileProvider);
+    final loadedProfile = state is ProfileLoaded ? state.profile : null;
     final body = switch (state) {
       ProfileInitial() || ProfileLoading() => const Center(
           child: CircularProgressIndicator(),
@@ -52,9 +53,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            onPressed: state case ProfileLoaded(:final profile)
-                ? () => _openEditSheet(context, profile)
-                : null,
+            onPressed:
+                loadedProfile == null ? null : () => _openEditSheet(context, loadedProfile),
           ),
           IconButton(
             icon: const Icon(Icons.settings),
