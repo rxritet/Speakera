@@ -39,7 +39,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = const AuthLoading();
     final hasToken = await _repo.hasToken();
     if (hasToken) {
-      state = const Authenticated(User(id: '', username: ''));
+      final storage = _ref.read(secureStorageProvider);
+      final userId = await storage.read(key: kUserIdKey);
+      final username = await storage.read(key: kUsernameKey);
+      if (userId != null && userId.isNotEmpty) {
+        state = Authenticated(
+          User(
+            id: userId,
+            username: (username == null || username.isEmpty) ? 'Player' : username,
+          ),
+        );
+      } else {
+        state = const Unauthenticated();
+      }
     } else {
       state = const Unauthenticated();
     }

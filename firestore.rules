@@ -10,18 +10,6 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == userId;
     }
 
-    function duelDoc(duelId) {
-      return get(/databases/$(database)/documents/duels/$(duelId));
-    }
-
-    function isDuelParticipant(duelId) {
-      return signedIn() && request.auth.uid in duelDoc(duelId).data.participantIds;
-    }
-
-    function isOpenDuel(duelId) {
-      return duelDoc(duelId).data.status == 'open';
-    }
-
     match /users/{userId} {
       allow read: if signedIn();
       allow write: if isOwner(userId);
@@ -95,6 +83,14 @@ service cloud.firestore {
     }
 
     match /duels/{duelId} {
+      function isParticipant() {
+        return signedIn() && request.auth.uid in resource.data.participantIds;
+      }
+
+      function isOpenLobby() {
+        return resource.data.status == 'open';
+      }
+
       function canJoinOpenDuel() {
         return signedIn() &&
           resource.data.status == 'open' &&
@@ -107,27 +103,27 @@ service cloud.firestore {
           ]);
       }
 
-      allow read: if signedIn() && (isDuelParticipant(duelId) || isOpenDuel(duelId));
+      allow read: if signedIn() && (isParticipant() || isOpenLobby());
       allow create: if signedIn() && request.auth.uid == request.resource.data.creatorId;
-      allow update: if isDuelParticipant(duelId) || canJoinOpenDuel();
+      allow update: if isParticipant() || canJoinOpenDuel();
       allow delete: if signedIn() && request.auth.uid == resource.data.creatorId;
 
       match /participants/{participantId} {
-        allow read: if signedIn() && (isDuelParticipant(duelId) || isOpenDuel(duelId));
+        allow read: if signedIn() && (isParticipant() || isOpenLobby());
         allow write: if signedIn() &&
-          (request.auth.uid == participantId || isDuelParticipant(duelId));
+          (request.auth.uid == participantId || isParticipant());
       }
 
       match /checkins/{checkinId} {
-        allow read: if isDuelParticipant(duelId);
-        allow create: if isDuelParticipant(duelId) &&
+        allow read: if isParticipant();
+        allow create: if isParticipant() &&
           request.auth.uid == request.resource.data.userId;
         allow update, delete: if false;
       }
 
       match /messages/{messageId} {
-        allow read: if isDuelParticipant(duelId);
-        allow create: if isDuelParticipant(duelId) &&
+        allow read: if isParticipant();
+        allow create: if isParticipant() &&
           request.auth.uid == request.resource.data.senderId;
         allow update, delete: if false;
       }

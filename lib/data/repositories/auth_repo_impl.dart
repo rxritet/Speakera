@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -47,7 +48,10 @@ class AuthRepositoryImpl implements AuthRepository {
       await _persistLocally(fbUser.uid, username);
       unawaited(_store.mirrorUserFromAuth(user));
 
-      return RegisterResult(user: user, token: await fbUser.getIdToken() ?? '');
+      return RegisterResult(
+        user: user,
+        token: await fbUser.getIdToken() ?? '',
+      );
     } on fb.FirebaseAuthException catch (e) {
       throw _mapFirebaseError(e);
     }
@@ -81,7 +85,7 @@ class AuthRepositoryImpl implements AuthRepository {
       } else {
         final googleUser = await GoogleSignIn().signIn();
         if (googleUser == null) {
-          throw const AuthFailure('Вход через Google отменен.');
+          throw const AuthFailure('Вход через Google отменён.');
         }
 
         final googleAuth = await googleUser.authentication;
@@ -102,6 +106,14 @@ class AuthRepositoryImpl implements AuthRepository {
       rethrow;
     } on fb.FirebaseAuthException catch (e) {
       throw _mapFirebaseError(e);
+    } on PlatformException catch (e) {
+      final message = e.message ?? e.toString();
+      if (e.code == 'sign_in_failed' && message.contains('ApiException: 10')) {
+        throw const AuthFailure(
+          'Google Sign-In не настроен для Android. Добавьте SHA-1 и SHA-256 в Firebase, скачайте новый google-services.json и пересоберите APK.',
+        );
+      }
+      throw AuthFailure('Ошибка входа через Google: $message');
     } catch (e) {
       throw AuthFailure('Ошибка входа через Google: $e');
     }
@@ -119,6 +131,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       return true;
     }
+
     await _storage.delete(key: kTokenKey);
     await _storage.delete(key: kUserIdKey);
     await _storage.delete(key: kUsernameKey);
@@ -130,13 +143,15 @@ class AuthRepositoryImpl implements AuthRepository {
     await _storage.delete(key: kTokenKey);
     await _storage.delete(key: kUserIdKey);
     await _storage.delete(key: kUsernameKey);
+
     if (Firebase.apps.isNotEmpty) {
       await _auth.signOut();
     }
+
     try {
       await GoogleSignIn().signOut();
     } catch (_) {
-      // Ignore Google sign-out issues when the user used email/password auth.
+      // Ignore Google sign-out failures for non-Google sessions.
     }
   }
 
@@ -145,8 +160,6 @@ class AuthRepositoryImpl implements AuthRepository {
     final profile = await _store.readProfile(fbUser.uid);
     final username =
         profile?.username ?? fbUser.displayName ?? email?.split('@').first ?? 'Player';
-    final wins = profile?.wins ?? 0;
-    final losses = profile?.losses ?? 0;
 
     await _persistLocally(fbUser.uid, username);
 
@@ -154,15 +167,18 @@ class AuthRepositoryImpl implements AuthRepository {
       id: fbUser.uid,
       username: username,
       email: email,
-      wins: wins,
-      losses: losses,
+      wins: profile?.wins ?? 0,
+      losses: profile?.losses ?? 0,
     );
 
     if (profile == null) {
       unawaited(_store.mirrorUserFromAuth(user));
     }
 
-    return LoginResult(user: user, token: await fbUser.getIdToken() ?? '');
+    return LoginResult(
+      user: user,
+      token: await fbUser.getIdToken() ?? '',
+    );
   }
 
   Future<void> _persistLocally(String uid, String username) async {
