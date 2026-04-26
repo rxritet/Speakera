@@ -239,14 +239,12 @@ class HabitDuelFirestoreStore {
     if (!duelDoc.exists) return null;
 
     final participantSnap = await duelDoc.reference.collection('participants').get();
-    final checkinSnap = await duelDoc.reference.collection('checkins')
-        .orderBy('checkedAt', descending: true)
-        .get();
+    final checkins = await _readCheckinsIfAllowed(duelDoc.reference);
 
     return _duelFromDocument(
       duelDoc,
       participants: participantSnap.docs,
-      checkins: checkinSnap.docs,
+      checkins: checkins,
     );
   }
 
@@ -256,11 +254,26 @@ class HabitDuelFirestoreStore {
     return _duels.doc(duelId).snapshots().asyncMap((snap) async {
       if (!snap.exists) return null;
       final participantSnap = await snap.reference.collection('participants').get();
-      final checkinSnap = await snap.reference.collection('checkins')
+      final checkins = await _readCheckinsIfAllowed(snap.reference);
+      return _duelFromDocument(snap, participants: participantSnap.docs, checkins: checkins);
+    });
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _readCheckinsIfAllowed(
+    DocumentReference<Map<String, dynamic>> duelRef,
+  ) async {
+    try {
+      final snapshot = await duelRef
+          .collection('checkins')
           .orderBy('checkedAt', descending: true)
           .get();
-      return _duelFromDocument(snap, participants: participantSnap.docs, checkins: checkinSnap.docs);
-    });
+      return snapshot.docs;
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied') {
+        return const [];
+      }
+      rethrow;
+    }
   }
 
   /// Stream для real-time обновлений списка дуэлей пользователя.
