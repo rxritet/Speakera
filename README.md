@@ -1,457 +1,256 @@
-# HabitDuel
+<div align="center">
 
-HabitDuel — это соревновательное приложение для трекинга привычек, где личные цели превращаются в дуэли, серии, XP, достижения и рост профиля. Репозиторий включает Flutter-клиент, локальный Dart backend на Shelf, PostgreSQL-инфраструктуру для API-сценариев, интеграцию с Firebase и нагрузочные тесты на k6.
+# ⚔️ HabitDuel
 
-## Что есть в проекте
+**Выработай привычку побеждать.**
 
-- Flutter-приложение для Android, iOS и Web.
-- Дуэли привычек: 1v1, групповые лобби, инвайты, чекины, серии и рейтинг.
-- Геймификация: XP, достижения, квесты, магазин, аватары, события и прогресс профиля.
-- Firebase-интеграция: Auth, Firestore, FCM и локальные уведомления.
-- Локальный backend на Dart: REST API, JWT, PostgreSQL, миграции, WebSocket и сценарии для нагрузочного тестирования.
-- Готовые PowerShell-скрипты и Docker Compose для локального запуска.
+HabitDuel — мобильное приложение для соревновательного отслеживания привычек. Брось вызов другу, делай ежедневные чекины и доказывай, кто дисциплинированнее.
 
-## Текущее состояние архитектуры
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart)](https://dart.dev)
+[![Firebase](https://img.shields.io/badge/Firebase-Auth%20%7C%20Firestore%20%7C%20FCM-FFCA28?logo=firebase)](https://firebase.google.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://docs.docker.com/compose)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-Проект находится в гибридном состоянии:
+</div>
 
-- Flutter-клиент уже сильно опирается на Firebase и использует Firestore как основной источник данных для заметной части пользовательских сценариев.
-- Локальный Shelf + PostgreSQL backend по-прежнему нужен для REST API, JWT-флоу, миграций, WebSocket и k6-нагрузки.
-- В результате в репозитории сосуществуют две рабочие модели:
-  - Firebase-first для клиентских фич приложения.
-  - Локальный API-стек для backend-разработки, smoke-checks и нагрузочных тестов.
+---
 
-Это не просто мобильное приложение и не только сервер. Репозиторий устроен как full-stack база для разработки, демо и проверки производительности.
+## 🎯 Что это такое
 
-## Стек
+Большинство приложений для привычек скучны — ты один против себя. HabitDuel делает это соревнованием: ты и соперник выбираете привычку, устанавливаете правила и каждый день делаете чекин. Побеждает тот, кто не сдался.
 
-### Клиент
+### Ключевые идеи
+- **Дуэли** — 1v1 челленджи с реальным ставком (стрики, репутация, XP)
+- **Геймификация** — уровни, достижения, ежедневные квесты, сезоны
+- **Прозрачность** — тепловая карта активности, H2H статистика, лидерборд
+- **Кастомизация** — магазин аватаров, тем и бустеров
 
-- Flutter
-- Dart
-- Riverpod
-- Dio
-- Firebase Core
-- Firebase Auth
-- Cloud Firestore
-- Firebase Messaging
-- Flutter Local Notifications
-- Shared Preferences
-- Flutter Secure Storage
-- WebSocket Channel
+---
 
-### Backend
+## ✨ Функциональность
 
-- Dart
-- Shelf
-- Shelf Router
-- Shelf WebSocket
-- PostgreSQL 16
-- `dart_jsonwebtoken`
-- Docker Compose
+### 🥊 Дуэли
+- Создание и принятие вызовов
+- Ежедневные чекины с подтверждением
+- Статусы дуэли: активная / завершённая / ожидание
+- Быстрые сообщения и чат внутри дуэли (WebSocket)
 
-### Инструменты качества
+### 🏆 Геймификация
+- **XP и уровни** — растут с каждым чекином и победой
+- **Достижения** — 8+ разблокируемых наград в 5 категориях, включая секретные
+- **Ежедневные квесты** — бонусные задачи для дополнительного XP
+- **Сезоны** — ротируемые события и уникальные награды
 
-- `flutter_test`
-- `dart analyze`
-- `flutter_lints`
-- k6
+### 📊 Статистика
+- Общий обзор: дуэли / победы / поражения / win rate
+- Тепловая карта активности за 365 дней
+- H2H статистика по конкретным соперникам
+- Любимое время для чекинов
 
-## Основные возможности
+### 🛍️ Магазин
+- Аватары, темы оформления, эффекты
+- Бустеры с таймером (ускоренный XP, streak shield)
+- Три валюты: XP, гемы, монеты
 
-- Аутентификация: email/password и Google Sign-In.
-- Дуэли: создание, принятие, просмотр и завершение.
-- Групповые дуэли и открытые лобби.
-- Чекины и подготовка к trusted check-in через Apple Health / Google Fit-подобные метрики.
-- Профиль, лидерборд, достижения, статистика, магазин, события и квесты.
-- Локальные уведомления и hooks для push-уведомлений через FCM.
-- Demo/presentation mode для web.
+### 👥 Социальные функции
+- Добавление друзей и поиск соперников
+- Рекомендации оппонентов по уровню
+- Real-time уведомления о чекинах соперника
 
-## Структура репозитория
+---
 
-```text
-lib/                    Flutter-приложение
-android/                Android-проект
-ios/                    iOS-проект
-web/                    Web-обвязка Flutter
-assets/                 Брендинг и ассеты
-test/                   Flutter-тесты
-server/                 Dart Shelf backend и SQL-миграции
-load-tests/k6/          k6 smoke/lifecycle/load сценарии
-load-tests/results/     Результаты нагрузочных прогонов
-scripts/                PowerShell-скрипты для локальной разработки
-docs/design/            Дизайн и продуктовые заметки
-docs/firebase/          Firebase-документация и миграция
-docs/ops/               Операционные инструкции
-docs/project/           Сводка по реализации
+## 🏗️ Архитектура
+
+Монорепо: Flutter-приложение + Dart Shelf backend в одном репозитории.
+
+```
+HabitDuel/
+├── lib/                        # Flutter-приложение (Clean Architecture)
+│   ├── core/                   # Firebase, сеть, утилиты
+│   ├── data/                   # Репозитории, источники данных
+│   ├── domain/                 # Бизнес-сущности и use cases
+│   └── presentation/           # UI: экраны, виджеты, Riverpod провайдеры
+│       ├── screens/
+│       │   ├── home/           # Список дуэлей
+│       │   ├── stats/          # Статистика + тепловая карта
+│       │   ├── achievements/   # Дерево достижений
+│       │   ├── shop/           # Магазин
+│       │   └── profile/        # Профиль и настройки
+│       ├── providers/          # Riverpod state management
+│       └── widgets/            # Переиспользуемые компоненты
+│
+├── server/                     # Dart Shelf backend
+│   ├── bin/                    # Entrypoint + migrate
+│   ├── lib/
+│   │   ├── handlers/           # HTTP handlers (auth, duels, checkins, leaderboard)
+│   │   ├── services/           # Бизнес-логика
+│   │   ├── db/                 # PostgreSQL слой
+│   │   ├── middleware/         # JWT-аутентификация, CORS
+│   │   ├── websocket/          # Real-time соединения
+│   │   └── cron/               # Фоновые задачи
+│   └── migrations/             # SQL-миграции
+│
+├── docs/                       # Документация, дизайн, Firebase, ops
+├── load-tests/                 # k6 нагрузочные тесты
+├── Dockerfile
+└── docker-compose.yml
 ```
 
-## Быстрый старт
+### Технологический стек
+
+| Слой | Технология |
+|------|-----------|
+| Мобильный клиент | Flutter 3 + Dart |
+| State management | Riverpod 2 |
+| HTTP клиент | Dio |
+| Real-time | WebSocket (`web_socket_channel`) |
+| Backend | Dart Shelf + shelf_router |
+| База данных | PostgreSQL 16 |
+| Аутентификация | Firebase Auth + JWT |
+| Облачное хранилище | Cloud Firestore |
+| Push-уведомления | Firebase Cloud Messaging |
+| Безопасное хранилище | flutter_secure_storage |
+| Контейнеризация | Docker + Docker Compose |
+| Нагрузочные тесты | k6 |
+
+---
+
+## 🚀 Быстрый старт
 
 ### Требования
+- Flutter SDK `≥ 3.11.0`
+- Dart SDK `≥ 3.0.0`
+- Docker & Docker Compose
+- Firebase проект (Auth, Firestore, FCM)
 
-- Flutter SDK с доступными командами `flutter` и `dart`
-- Docker Desktop
-- Android Studio и/или Xcode для мобильной разработки
-- Настроенный Firebase-проект
+### 1. Клонирование
 
-### Установка зависимостей
-
-Клиент:
-
-```powershell
-flutter pub get
+```bash
+git clone https://github.com/rxritet/HabitDuel.git
+cd HabitDuel
 ```
 
-Backend при локальной работе вне Docker:
+### 2. Backend (Docker)
 
-```powershell
-Set-Location .\server
-dart pub get
-Set-Location ..
-```
+```bash
+# Скопируй и заполни переменные окружения
+cp server/.env.example server/.env
 
-### Подъём локального backend-стека
+# Запусти PostgreSQL + Migrations + Server
+docker compose up --build
 
-Минимальный запуск:
-
-```powershell
-docker compose up -d --build db migrate server
-```
-
-Проверка здоровья API:
-
-```powershell
+# Проверь health:
 curl http://localhost:8080/healthz
 ```
 
-Рекомендуемый helper-скрипт для Windows:
+| Сервис | URL |
+|--------|-----|
+| API Server | `http://localhost:8080` |
+| Adminer (DB UI) | `http://localhost:8088` (профиль `tools`) |
+| Dozzle (логи) | `http://localhost:9999` (профиль `observability`) |
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\dev-stack.ps1
+```bash
+# Запуск с дополнительными инструментами
+docker compose --profile tools --profile observability up
 ```
 
-Расширенный режим с UI для логов и БД:
+### 3. Flutter-приложение
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\dev-stack.ps1 -Observability -Tools
+```bash
+# Установи зависимости
+flutter pub get
+
+# Подключи Firebase (нужен FlutterFire CLI)
+flutterfire configure
+
+# Запусти
+flutter run
 ```
 
-После запуска доступны:
+### 4. Переменные окружения (server/.env)
 
-- API: `http://localhost:8080`
-- Dozzle: `http://localhost:9999`
-- Adminer: `http://localhost:8088`
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=habitduel
+DB_USER=postgres
+DB_PASSWORD=your_password
+JWT_SECRET=your_jwt_secret
+PORT=8080
 
-## Запуск приложения
-
-### Web
-
-Самый быстрый локальный сценарий:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\dev-web.ps1
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_SERVICE_ACCOUNT_PATH=../service-account.json
 ```
 
-Скрипт:
+---
 
-- поднимает `db`, `migrate` и `server`
-- ждёт готовности API
-- запускает Flutter Web на `http://localhost:8081`
-- передаёт `--dart-define=API_BASE_URL=http://localhost:8080`
+## 🔌 API
 
-Если нужен web-сценарий с явным включением Firebase:
+Базовый URL: `http://localhost:8080`
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\dev-web.ps1 -EnableFirebaseWeb
-```
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/auth/register` | Регистрация |
+| `POST` | `/auth/login` | Вход, возвращает JWT |
+| `GET` | `/duels` | Список дуэлей пользователя |
+| `POST` | `/duels` | Создать дуэль |
+| `POST` | `/duels/:id/accept` | Принять вызов |
+| `POST` | `/checkins` | Сделать чекин |
+| `GET` | `/checkins/:duelId` | История чекинов |
+| `GET` | `/leaderboard` | Глобальный лидерборд |
+| `GET` | `/healthz` | Health check |
+| `WS` | `/ws` | WebSocket (real-time события) |
 
-### Android debug
+Все защищённые роуты требуют заголовок `Authorization: Bearer <jwt>`.
 
-Для Android-эмулятора в debug уже есть дефолтный адрес `http://10.0.2.2:8080`, поэтому обычно достаточно:
+---
 
-```powershell
-flutter run -d android
-```
+## 🧪 Тестирование
 
-Для физического Android-устройства нужно передать LAN IP компьютера:
-
-```powershell
-flutter run -d <DEVICE_ID> --dart-define=API_BASE_URL=http://<YOUR_PC_IP>:8080
-```
-
-### iOS debug
-
-Для iOS Simulator в debug используется `http://localhost:8080`:
-
-```powershell
-flutter run -d ios
-```
-
-Для физического iPhone также нужен LAN IP компьютера:
-
-```powershell
-flutter run -d <DEVICE_ID> --dart-define=API_BASE_URL=http://<YOUR_PC_IP>:8080
-```
-
-## Мобильное приложение
-
-### Платформы
-
-- Android-проект находится в `android/`
-- iOS-проект находится в `ios/`
-- Web target находится в `web/`
-
-### Идентификаторы
-
-- Android `applicationId`: `com.rxritet.habitduel`
-- iOS bundle id: `com.rxritet.habitduel`
-- Android app label: `HabitDuel`
-
-### Разрешения и уведомления
-
-- Android запрашивает `INTERNET` и `POST_NOTIFICATIONS`
-- iOS настроен на локальную разработку с `localhost` и `127.0.0.1`
-- локальные уведомления инициализируются при старте приложения
-- FCM инициализируется на не-web платформах
-
-### Firebase-конфиг
-
-В репозитории уже лежат платформенные конфиги:
-
-- `android/app/google-services.json`
-- `ios/Runner/GoogleService-Info.plist`
-- `lib/firebase_options.dart`
-
-Перед реальным релизом стоит отдельно проверить, что они указывают на нужный Firebase-проект.
-
-## Сборки
-
-### Release APK
-
-Для non-debug мобильных сборок `API_BASE_URL` нужно передавать явно:
-
-```powershell
-flutter build apk --release --dart-define=API_BASE_URL=http://<YOUR_PC_IP>:8080
-```
-
-Артефакты появятся в:
-
-```text
-build/app/outputs/flutter-apk/
-```
-
-Для иконок используется `assets/branding/app_icon.png`.
-
-### Важное замечание по релизу
-
-Текущая конфигурация ориентирована на dev/demo-distribution. Перед публикацией в Google Play или App Store нужно отдельно подготовить нормальную release-signing конфигурацию, секреты и production-настройки окружения.
-
-## Backend
-
-### Что делает сервер
-
-Локальный backend в `server/` предоставляет:
-
-- `/healthz`
-- `/auth/*`
-- защищённый `/users/me`
-- `/duels/*`
-- `/leaderboard/*`
-- WebSocket-комнаты через `/ws/*`
-- миграции, импорт и экспорт demo-данных
-
-### Docker-сервисы
-
-В `docker-compose.yml` описаны:
-
-- `db` — PostgreSQL 16
-- `migrate` — применение SQL-миграций
-- `server` — Shelf API
-- `adminer` — UI для БД
-- `dozzle` — просмотр логов
-- `k6` — нагрузочные прогоны API
-
-### Основные переменные окружения
-
-- `POSTGRES_PASSWORD`
-- `DB_HOST`
-- `DB_PORT`
-- `DB_NAME`
-- `DB_USER`
-- `DB_PASSWORD`
-- `JWT_SECRET`
-- `PORT`
-- `K6_SCRIPT`
-- `K6_VUS`
-- `K6_DURATION`
-
-## Firebase и модель данных
-
-Firebase сейчас играет ключевую роль в клиентской части:
-
-- Firebase Auth используется для входа и сессий.
-- Cloud Firestore хранит пользователей, дуэли, бейджи, рейтинг, инвентарь, квесты и события.
-- Firebase Messaging подключён под мобильные push-сценарии.
-
-Ключевые файлы:
-
-- `firestore.rules`
-- `firestore.indexes.json`
-- `firebase.json`
-- `docs/firebase/FIREBASE_MIGRATION.md`
-- `docs/firebase/FIREBASE_APP_UPDATES.md`
-
-### Импорт demo-данных в Firestore
-
-Демо JSON лежит в `server/exports/firebase-demo`.
-
-Запускать импорт лучше из директории `server/`:
-
-```powershell
-Set-Location .\server
-$env:EXPORT_DIR='exports/firebase-demo'
-$env:DEMO_CURRENT_USER_ID='<your Firebase Auth uid>'
-$env:DEMO_CURRENT_USERNAME='Aliar'
-dart run bin/import_firebase.dart
-```
-
-Полезный dry-run режим:
-
-```powershell
-$env:IMPORT_DRY_RUN='true'
-```
-
-Импортер ожидает service account JSON либо в корне репозитория как `service-account.json`, либо через `FIREBASE_SERVICE_ACCOUNT_PATH`.
-
-## Архитектура по слоям
-
-### Flutter-клиент
-
-Клиент организован близко к clean architecture:
-
-- `lib/domain/` — сущности, контракты репозиториев, use cases
-- `lib/data/` — реализации репозиториев и data source слой
-- `lib/presentation/` — Riverpod providers, экраны и виджеты
-- `lib/core/` — сеть, Firebase, уведомления, тема, health stubs, константы и утилиты
-
-### State management
-
-В проекте есть провайдеры для:
-
-- auth
-- duels
-- achievements
-- stats
-- shop
-- profile
-- social
-- leaderboard
-- events
-- theme
-- gamification
-
-### Стратегия доступа к данным
-
-Самая важная деталь реализации — гибридный data layer:
-
-- аутентификация и значительная часть клиентских сценариев уже опираются на Firebase
-- Firestore-backed data sources являются основными для профиля, дуэлей и лидерборда
-- REST backend сохранён для API-ориентированных сценариев и нагрузочного тестирования
-- real-time обновления постепенно смещаются в сторону Firestore streams, но локальный backend всё ещё поддерживает WebSocket-флоу
-
-## Тесты и проверки качества
-
-### Flutter
-
-Анализ кода:
-
-```powershell
-dart analyze
-```
-
-Тесты:
-
-```powershell
+```bash
+# Юнит-тесты Flutter
 flutter test
+
+# Нагрузочные тесты (k6) — требует запущенный сервер
+docker compose --profile load run k6
+
+# Указать свой сценарий
+K6_SCRIPT=api-load.js K6_VUS=50 K6_DURATION=60s docker compose --profile load run k6
 ```
 
-Сейчас в репозитории есть только минимальный placeholder smoke test в `test/widget_test.dart`, поэтому анализатор пока полезнее, чем текущее покрытие UI-тестами.
+Результаты нагрузочных тестов сохраняются в `load-tests/results/`.
 
-### Backend
+---
 
-В `server/pubspec.yaml` подключён пакет `test`, но отдельных backend test files сейчас в репозитории нет. На практике серверная проверка сейчас держится на:
+## 🗂️ Документация
 
-- локальном запуске API
-- ручной проверке маршрутов
-- k6 сценариях
+- [`docs/project/IMPLEMENTATION_SUMMARY.md`](docs/project/IMPLEMENTATION_SUMMARY.md) — итоги реализации HabitDuel 2.0
+- [`docs/design/`](docs/design/) — дизайн-решения и UI гайдлайны
+- [`docs/firebase/`](docs/firebase/) — схема Firestore и правила безопасности
+- [`docs/ops/`](docs/ops/) — деплой и операционные заметки
+- [`firestore.rules`](firestore.rules) — правила доступа к Firestore
 
-### k6-нагрузка
+---
 
-Доступные сценарии:
+## 🤝 Вклад в проект
 
-- `api-smoke.js`
-- `api-lifecycle.js`
-- `api-load.js`
+1. Форкни репозиторий
+2. Создай ветку: `git checkout -b feat/your-feature`
+3. Сделай коммит: `git commit -m 'feat: add your feature'`
+4. Открой Pull Request
 
-Базовый запуск:
+Придерживайся стандартов: `flutter analyze` без ошибок, `flutter test` зелёный.
 
-```powershell
-docker compose --profile load run --rm k6
-```
+---
 
-Запуск конкретного сценария:
+## 📄 Лицензия
 
-```powershell
-$env:K6_SCRIPT='api-lifecycle.js'
-docker compose --profile load run --rm k6
-```
+MIT © [rxritet](https://github.com/rxritet)
 
-Результат сохраняется в:
+---
 
-```text
-load-tests/results/api-summary.json
-```
-
-## Операционная работа
-
-Полезные команды:
-
-```powershell
-docker compose logs server --tail 200
-docker compose ps
-docker compose down
-```
-
-Подробности по эксплуатации и отладке собраны в `docs/ops/OPERATIONS.md`.
-
-## Что уже реализовано
-
-- обновлённый UI дуэлей и набор продуктовых экранов
-- Firestore-first repositories и providers
-- локальные уведомления и FCM hooks
-- синхронизация профиля и лидерборда
-- поддержка group duel lobby
-- подготовка trusted check-in через health-метрики
-- миграции backend, demo exports и load-test сценарии
-
-## Что ещё важно перед production
-
-- расширить автоматическое тестовое покрытие
-- довести release signing и секреты до production-уровня
-- повторно проверить Firestore rules и indexes
-- усилить production-конфигурацию мобильных сборок
-- завершить оставшиеся шаги по Firebase cutover
-
-## Документация по проекту
-
-- `docs/design/DESIGN.md`
-- `docs/design/DESIGN_2.0.md`
-- `docs/firebase/FIREBASE_MIGRATION.md`
-- `docs/firebase/FIREBASE_APP_UPDATES.md`
-- `docs/ops/OPERATIONS.md`
-- `docs/project/IMPLEMENTATION_SUMMARY.md`
-
-## Коротко
-
-HabitDuel — это full-stack проект с Flutter-клиентом, Firebase-first продуктовой логикой и локальным Dart/PostgreSQL backend для API, миграций и нагрузочной валидации. Если работа идёт над мобильной частью, основной фокус — Flutter + Firebase. Если нужно проверять серверные сценарии, поднимайте Docker-стек и используйте встроенные k6 и ops-инструменты.
+<div align="center">
+  <b>HabitDuel</b> — потому что привычки лучше формируются, когда есть соперник. ⚔️
+</div>
